@@ -1,21 +1,78 @@
-fn print_board(matrix: &[&[i32]]) {
+mod board;
+
+use board::Board;
+
+fn print_board(matrix: &Board) {
     println!("{}", format_board(matrix));
 }
 
-fn format_board(matrix: &[&[i32]]) -> String {
+// fn format_board(matrix: &Board) -> String {
+//     let mut output = String::new();
+//     for row in matrix {
+//         output.push_str(&"| - ".repeat(9));
+//         output.push_str("|\n");
+//         output.push_str("| ");
+//         for col in *row {
+//             output.push_str(&format!("{} | ", col));
+//         }
+//         output.push('\n');
+//     }
+//     output.push_str(&"| - ".repeat(9));
+//     output.push_str("|\n");
+//     output
+// }
+
+fn format_row(matrix: &Board) -> String {
     let mut output = String::new();
-    for row in matrix {
-        output.push_str("| ");
-        for col in *row {
-            output.push_str(&format!("{} | ", col));
+}
+
+fn stop_border(matrix: &Board) -> String {
+    let mut output = String::new();
+}
+
+fn bottom_border(matrix: &Board) -> String {
+    let mut output = String::new();
+}
+
+fn thick_middle_border(matrix: &Board) -> String {
+    let mut output = String::new();
+}
+
+fn thin_middle_border(matrix: &Board) -> String {
+    let mut output = String::new();
+}
+
+fn format_board(matrix: &Board) -> String {
+
+    '''
+        Characters: 
+            ╔ ╗ ╚ ╝
+            ═ ║
+            ╦ ╩ ╠ ╣ ╬
+    '''
+    let mut output = String::new();
+
+    output.push_str(&top_border(matrix));
+
+    for row_id in 0..matrix.size {
+        output.push_str(&format_row(matrix, row_id));
+
+        if row_id == matrix.size - 1 {
+            output.push_str(&bottom_border(matrix));
+        } else if (row_id + 1) % matrix.box_size == 0 {
+            output.push_str(&thick_middle_border(matrix));
+        } else {
+            output.push_str(&thin_middle_border(matrix));
         }
-        output.push('\n');
     }
+
     output
 }
 
 fn main() {
-    
+    let mut row = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    let matrix: &[[i32; 9]; 9] = &[row; 9];
+    print_board(matrix);
 }
 
 #[cfg(test)]
@@ -24,10 +81,8 @@ mod tests {
 
     #[test]
     fn test_format_board() {
-        let row1 = [1, 2, 3];
-        let row2 = [4, 5, 6];
-        let row3 = [7, 8, 9];
-        let matrix: &[&[i32]] = &[&row1, &row2, &row3];
+        let mut row = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let matrix: &[[i32; 9]; 9] = &[row; 9];
 
         let formatted_board: String = format_board(matrix);
         assert_eq!(
