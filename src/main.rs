@@ -30,6 +30,24 @@ fn stop_border(matrix: &Board) -> String {
     let mut output = String::new();
 }
 
+fn top_border(matrix: &Board) -> String {
+    let mut output = String::new();
+
+    output.push('╔');
+    for i in 0..matrix.size {
+        output.push_str("═══");
+
+        if i == matrix.size - 1 {
+            output.push('╗');
+        } else if (i + 1) % matrix.box_size == 0 {
+            output.push('╦');
+        } else {
+            output.push('╪');
+        }
+    }
+    output.push('\n');
+}
+
 fn bottom_border(matrix: &Board) -> String {
     let mut output = String::new();
 
