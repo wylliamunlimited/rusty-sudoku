@@ -42,10 +42,11 @@ fn top_border(matrix: &Board) -> String {
         } else if (i + 1) % matrix.box_size == 0 {
             output.push('╦');
         } else {
-            output.push('╪');
+            output.push('╤');
         }
     }
     output.push('\n');
+    output
 }
 
 fn bottom_border(matrix: &Board) -> String {
@@ -64,10 +65,28 @@ fn bottom_border(matrix: &Board) -> String {
         }
     }
     output.push('\n');
+    output
 }
 
 fn thick_middle_border(matrix: &Board) -> String {
     let mut output = String::new();
+
+    output.push('╠');
+
+    for i in 0..matrix.size {
+        output.push_str('═══');
+
+        if i == matrix.size - 1 {
+            output.push_str('╣');
+        } else if (i + 1) % matrix.box_size == 0 {
+            output.push_str('╬');
+        } else {
+            output.push_str('╪');
+        }
+    }
+    
+    output.push('\n');
+    output
 }
 
 fn thin_middle_border(matrix: &Board) -> String {
@@ -112,15 +131,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_format_board() {
-        let mut row = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        let matrix: &[[i32; 9]; 9] = &[row; 9];
+    fn test_bottom_border() {
+        // Make a Board object
 
-        let formatted_board: String = format_board(matrix);
+
+        // Call the bottom_border() function
+
+        // assert_eq!
+    }
+
+    #[test]
+    fn test_top_border() {
+        // Make a Board Object
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data,
+        };
+        
+        // Call the top_border() function
+        let rendered_format: String = top_border(&sample);
+
+        // assert_eq!
         assert_eq!(
-            formamated_board(matrix),
-            "| 1 | 2 | 3 | \n| 4 | 5 | 6 | \n| 7 | 8 | 9 | \n"
+            rendered_format,
+            "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n"
         );
-
     }
 }
