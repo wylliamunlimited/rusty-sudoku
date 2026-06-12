@@ -91,6 +91,23 @@ fn thick_middle_border(matrix: &Board) -> String {
 
 fn thin_middle_border(matrix: &Board) -> String {
     let mut output = String::new();
+
+    output.push('╟');
+
+    for i in 0..matrix.size {
+        output.push_str('═══');
+
+        if i == matrix.size - 1 {
+            output.push_str('╢');
+        } else if (i + 1) % matrix.box_size == 0 {
+            output.push_str('╫');
+        } else {
+            output.push_str('┼');
+        }
+    }
+    
+    output.push('\n');
+    output
 }
 
 fn format_board(matrix: &Board) -> String {
