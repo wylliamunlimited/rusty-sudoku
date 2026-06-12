@@ -232,4 +232,21 @@ mod tests {
             "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n"
         )
     }
+
+    #[test]
+    fn test_row_format() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = format_row(&sample, 1);
+
+        assert_eq!(
+            rendered_format,
+            "║ 1 │ 2 │ 3 ║ -1 │ -1 │ -1 ║ -1 │ -1 │ -1 ║\n"
+        );
+    }
 }
