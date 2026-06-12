@@ -163,16 +163,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_bottom_border() {
-        // Make a Board object
-
-
-        // Call the bottom_border() function
-
-        // assert_eq!
-    }
-
-    #[test]
     fn test_top_border() {
         // Make a Board Object
         let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
@@ -190,5 +180,56 @@ mod tests {
             rendered_format,
             "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n"
         );
+    }
+
+    #[test]
+    fn test_bottom_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9]
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = bottom_border(&sample);
+
+        assert_eq!(
+            rendered_format,
+            "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
+        )
+    } 
+
+    #[test]
+    fn test_thin_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = thin_border(&sample);
+
+        assert_eq!(
+            rendered_format,
+            "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n"
+        )
+    }
+
+    #[test]
+    fn test_thick_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = thick_border(&sample);
+
+        assert_eq!(
+            rendered_format,
+            "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n"
+        )
     }
 }
