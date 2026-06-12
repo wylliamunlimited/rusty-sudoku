@@ -22,12 +22,27 @@ fn print_board(matrix: &Board) {
 //     output
 // }
 
-fn format_row(matrix: &Board) -> String {
+fn format_row(matrix: &Board, row_id: usize) -> String {
     let mut output = String::new();
-}
 
-fn stop_border(matrix: &Board) -> String {
-    let mut output = String::new();
+    let roster: &Vec<i32> = &matrix.cells[row_id];
+
+    output.push('║');
+
+    for i in 0..matrix.size {
+        output.push_str(&format!(" {} ", roster[i]));
+
+        if i == matrix.size - 1 {
+            output.push('║');
+        } else if (i + 1) % matrix.box_size == 0 {
+            output.push('║');
+        } else {
+            output.push('│');
+        }
+    }
+    
+    output.push('\n');
+    output
 }
 
 fn top_border(matrix: &Board) -> String {
