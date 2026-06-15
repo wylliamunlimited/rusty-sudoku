@@ -141,20 +141,21 @@ impl BorderStyle {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_top_border() {
-        // Make a Board Object
+    fn sample_board() -> Board {
         let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
         let sample: Board = Board {
             size: 9,
             box_size: 3,
             cells: data,
         };
-        
-        // Call the top_border() function
-        let rendered_format: String = sample.top_border();
 
-        // assert_eq!
+        sample
+    }
+
+    #[test]
+    fn test_top_border() {
+        let rendered_format: String = sample_board().top_border();
+
         assert_eq!(
             rendered_format,
             "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n"
@@ -163,14 +164,7 @@ mod tests {
 
     #[test]
     fn test_bottom_border() {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data
-        };
-
-        let rendered_format: String = sample.bottom_border();
+        let rendered_format: String = sample_board().bottom_border();
 
         assert_eq!(
             rendered_format,
@@ -180,14 +174,7 @@ mod tests {
 
     #[test]
     fn test_thin_border() {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data
-        };
-
-        let rendered_format: String = sample.thin_middle_border();
+        let rendered_format: String = sample_board().thin_middle_border();
 
         assert_eq!(
             rendered_format,
@@ -197,14 +184,7 @@ mod tests {
 
     #[test]
     fn test_thick_border() {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data
-        };
-
-        let rendered_format: String = sample.thick_middle_border();
+        let rendered_format: String = sample_board().thick_middle_border();
 
         assert_eq!(
             rendered_format,
@@ -214,14 +194,7 @@ mod tests {
 
     #[test]
     fn test_row_format() {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data
-        };
-
-        let rendered_format: String = sample.format_row(1);
+        let rendered_format: String = sample_board()ple.format_row(1);
 
         assert_eq!(
             rendered_format,
