@@ -1,5 +1,5 @@
 pub struct Board {
-    size: usize,
-    box_size: usize,
-    cells: Vec<Vec<i32>>,
+    pub(crate) size: usize,
+    pub(crate) box_size: usize,
+    pub(crate) cells: Vec<Vec<i32>>,
 }
