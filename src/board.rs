@@ -194,7 +194,7 @@ mod tests {
 
     #[test]
     fn test_row_format() {
-        let rendered_format: String = sample_board()ple.format_row(1);
+        let rendered_format: String = sample_board().format_row(1);
 
         assert_eq!(
             rendered_format,
