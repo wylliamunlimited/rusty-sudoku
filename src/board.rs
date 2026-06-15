@@ -74,6 +74,26 @@ impl Board {
     }
 }
 
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.top_border())?;
+
+        for row_id in 0..self.size {
+            write!(f, "{}", self.format_row(row_id))?;
+
+            if row_id == self.size - 1 {
+                write!(f, "{}", self.bottom_border())?;
+            } else if (row_id + 1) % self.box_size == 0 {
+                write!(f, "{}", self.thick_middle_border())?;
+            } else {
+                write!(f, "{}", self.thin_middle_border())?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 // ============================================================================
 // HANDOFF NOTES — pick up here (refactor: move rendering onto Board)
 // ============================================================================
@@ -89,40 +109,7 @@ impl Board {
 //   those are methods on Board now. That's expected mid-refactor — the steps
 //   below fix it.
 //
-// ----------------------------------------------------------------------------
-// STEP 1 — Implement Display for Board (write it right here, below this note).
-// ----------------------------------------------------------------------------
-//   `Display` is the std trait for "render me as human text." Implementing it
-//   gives board.to_string(), format!("{board}"), and println!("{board}") free.
-//
-//   The signature is fixed by the std library — you can't change it:
-//
-//     impl fmt::Display for Board {
-//         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//             // write into `f` instead of building a String
-//             write!(f, "{}", self.top_border())?;
-//
-//             for row_id in 0..self.size {
-//                 // TODO: write the row, then the border underneath it.
-//                 // Same if / else-if / else as the old format_board:
-//                 //   last row            -> self.bottom_border()
-//                 //   (row_id+1)%box == 0 -> self.thick_middle_border()
-//                 //   otherwise           -> self.thin_middle_border()
-//             }
-//
-//             Ok(())   // () = "no value"; Ok(()) = "succeeded, nothing returned"
-//         }
-//     }
-//
-//   New pieces to remember:
-//     - `f: &mut fmt::Formatter` is the output sink. You WRITE into it; you
-//       don't return a String.
-//     - `write!(f, "{}", x)?` is like print! but targets `f`. Every write
-//       returns a Result, so it needs a trailing `?`.
-//     - `?` means "if Err, bail out and return that Err from fmt; else carry
-//       on." That's why fmt's return type is fmt::Result (= Result<(), Error>).
-//     - End with `Ok(())`.
-//
+// 
 // ----------------------------------------------------------------------------
 // STEP 2 — Clean up main.rs (it currently breaks the build):
 // ----------------------------------------------------------------------------
