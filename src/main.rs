@@ -30,7 +30,12 @@ fn format_row(matrix: &Board, row_id: usize) -> String {
     output.push('║');
 
     for i in 0..matrix.size {
-        output.push_str(&format!(" {} ", roster[i]));
+
+        if roster[i] < 0 {
+            output.push_str(&format!("   "));
+        } else {
+            output.push_str(&format!(" {} ", roster[i]));
+        }
 
         if i == matrix.size - 1 {
             output.push('║');
@@ -89,14 +94,14 @@ fn thick_middle_border(matrix: &Board) -> String {
     output.push('╠');
 
     for i in 0..matrix.size {
-        output.push_str('═══');
+        output.push_str("═══");
 
         if i == matrix.size - 1 {
-            output.push_str('╣');
+            output.push('╣');
         } else if (i + 1) % matrix.box_size == 0 {
-            output.push_str('╬');
+            output.push('╬');
         } else {
-            output.push_str('╪');
+            output.push('╪');
         }
     }
     
@@ -110,14 +115,14 @@ fn thin_middle_border(matrix: &Board) -> String {
     output.push('╟');
 
     for i in 0..matrix.size {
-        output.push_str('═══');
+        output.push_str("───");
 
         if i == matrix.size - 1 {
-            output.push_str('╢');
+            output.push('╢');
         } else if (i + 1) % matrix.box_size == 0 {
-            output.push_str('╫');
+            output.push('╫');
         } else {
-            output.push_str('┼');
+            output.push('┼');
         }
     }
     
@@ -126,13 +131,11 @@ fn thin_middle_border(matrix: &Board) -> String {
 }
 
 fn format_board(matrix: &Board) -> String {
+    // Characters: 
+    //     ╔ ╗ ╚ ╝
+    //     ═ ║
+    //     ╦ ╩ ╠ ╣ ╬
 
-    '''
-        Characters: 
-            ╔ ╗ ╚ ╝
-            ═ ║
-            ╦ ╩ ╠ ╣ ╬
-    '''
     let mut output = String::new();
 
     output.push_str(&top_border(matrix));
@@ -153,9 +156,7 @@ fn format_board(matrix: &Board) -> String {
 }
 
 fn main() {
-    let mut row = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-    let matrix: &[[i32; 9]; 9] = &[row; 9];
-    print_board(matrix);
+    
 }
 
 #[cfg(test)]
@@ -184,7 +185,7 @@ mod tests {
 
     #[test]
     fn test_bottom_border() {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9]
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
         let sample: Board = Board {
             size: 9,
             box_size: 3,
@@ -208,7 +209,7 @@ mod tests {
             cells: data
         };
 
-        let rendered_format: String = thin_border(&sample);
+        let rendered_format: String = thin_middle_border(&sample);
 
         assert_eq!(
             rendered_format,
@@ -225,7 +226,7 @@ mod tests {
             cells: data
         };
 
-        let rendered_format: String = thick_border(&sample);
+        let rendered_format: String = thick_middle_border(&sample);
 
         assert_eq!(
             rendered_format,
@@ -246,7 +247,7 @@ mod tests {
 
         assert_eq!(
             rendered_format,
-            "║ 1 │ 2 │ 3 ║ -1 │ -1 │ -1 ║ -1 │ -1 │ -1 ║\n"
+            "║ 1 │ 2 │ 3 ║   │   │   ║   │   │   ║\n"
         );
     }
 }
