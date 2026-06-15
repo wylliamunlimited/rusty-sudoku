@@ -1,6 +1,6 @@
 mod board;
 
-use board::{Board, BorderStyle};
+use board::Board;
 
 fn main() {
     
