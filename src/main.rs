@@ -1,6 +1,6 @@
 mod board;
 
-use board::Board;
+use board::{Board, BorderStyle};
 
 fn print_board(matrix: &Board) {
     println!("{}", format_board(matrix));
@@ -50,84 +50,41 @@ fn format_row(matrix: &Board, row_id: usize) -> String {
     output
 }
 
-fn top_border(matrix: &Board) -> String {
+fn border(matrix: &Board, style: &BorderStyle) -> String {
     let mut output = String::new();
 
-    output.push('╔');
+    output.push(style.left);
+
     for i in 0..matrix.size {
-        output.push_str("═══");
+        output.push_str(style.fill);
 
         if i == matrix.size - 1 {
-            output.push('╗');
+            output.push(style.right);
         } else if (i + 1) % matrix.box_size == 0 {
-            output.push('╦');
+            output.push(style.box_junction);
         } else {
-            output.push('╤');
+            output.push(style.cell);
         }
     }
+
     output.push('\n');
     output
+}
+
+fn top_border(matrix: &Board) -> String {
+    border(matrix, &BorderStyle::TOP)
 }
 
 fn bottom_border(matrix: &Board) -> String {
-    let mut output = String::new();
-
-    output.push('╚');
-    for i in 0..matrix.size {
-        output.push_str("═══");
-
-        if i == matrix.size - 1 {
-            output.push('╝');
-        } else if (i + 1) % matrix.box_size == 0 {
-            output.push('╩');
-        } else {
-            output.push('╧');
-        }
-    }
-    output.push('\n');
-    output
+    border(matrix, &BorderStyle::BOTTOM)
 }
 
 fn thick_middle_border(matrix: &Board) -> String {
-    let mut output = String::new();
-
-    output.push('╠');
-
-    for i in 0..matrix.size {
-        output.push_str("═══");
-
-        if i == matrix.size - 1 {
-            output.push('╣');
-        } else if (i + 1) % matrix.box_size == 0 {
-            output.push('╬');
-        } else {
-            output.push('╪');
-        }
-    }
-    
-    output.push('\n');
-    output
+    border(matrix, &BorderStyle::THICK)
 }
 
 fn thin_middle_border(matrix: &Board) -> String {
-    let mut output = String::new();
-
-    output.push('╟');
-
-    for i in 0..matrix.size {
-        output.push_str("───");
-
-        if i == matrix.size - 1 {
-            output.push('╢');
-        } else if (i + 1) % matrix.box_size == 0 {
-            output.push('╫');
-        } else {
-            output.push('┼');
-        }
-    }
-    
-    output.push('\n');
-    output
+    border(matrix, &BorderStyle::THIN)
 }
 
 fn format_board(matrix: &Board) -> String {
