@@ -94,52 +94,6 @@ impl fmt::Display for Board {
     }
 }
 
-// ============================================================================
-// HANDOFF NOTES — pick up here (refactor: move rendering onto Board)
-// ============================================================================
-//
-// WHERE THINGS STAND:
-//   - DONE: format_row + border + the 4 border wrappers are now methods on
-//     Board (above). `use std::fmt;` is already imported at the top.
-//   - NOT DONE: the whole-board render (old `format_board`) still lives in
-//     main.rs as a free function. It is the last thing to move.
-//
-//   ⚠️ THE PROJECT DOES NOT COMPILE RIGHT NOW. main.rs still calls
-//   top_border(matrix), format_row(matrix, ..), etc. as FREE functions, but
-//   those are methods on Board now. That's expected mid-refactor — the steps
-//   below fix it.
-//
-// 
-// ----------------------------------------------------------------------------
-// STEP 2 — Clean up main.rs (it currently breaks the build):
-// ----------------------------------------------------------------------------
-//   - DELETE the old free fn `format_board` (Display replaces it).
-//   - DELETE `print_board` and the commented-out dead format_board block.
-//   - The `use` line can drop BorderStyle: `use board::Board;` is enough.
-//   - Fill in main():
-//         fn main() {
-//             let board = Board { size: 9, box_size: 3, cells: vec![...] };
-//             print!("{board}");   // print! NOT println! — Display already
-//                                  // ends in '\n', so println! double-spaces.
-//         }
-//
-// ----------------------------------------------------------------------------
-// STEP 3 — Fix the tests (they still use free-function syntax):
-// ----------------------------------------------------------------------------
-//   Tests live in main.rs and call top_border(&sample), format_row(&sample, 1),
-//   format_board(&sample). Convert to method syntax:
-//       top_border(&sample)        -> sample.top_border()
-//       format_row(&sample, 1)     -> sample.format_row(1)
-//       format_board(&sample)      -> sample.to_string()   // via Display
-//   NOTE: the border/format_row methods are PRIVATE. The tests must therefore
-//   live in board.rs (same module sees private items), OR you make the methods
-//   pub(crate). Easiest: move the `mod tests { .. }` block into board.rs.
-//
-// ----------------------------------------------------------------------------
-// VERIFY: `cargo test` should show 6 passing tests and the build is clean.
-//   (test_board now asserts against sample.to_string().)
-// ============================================================================
-
 pub struct BorderStyle {
     pub(crate) left: char,
     pub(crate) fill: &'static str,
@@ -180,4 +134,143 @@ impl BorderStyle {
         box_junction: '╫',
         right: '╢',
     };
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_top_border() {
+        // Make a Board Object
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data,
+        };
+        
+        // Call the top_border() function
+        let rendered_format: String = sample.top_border();
+
+        // assert_eq!
+        assert_eq!(
+            rendered_format,
+            "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n"
+        );
+    }
+
+    #[test]
+    fn test_bottom_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = sample.bottom_border();
+
+        assert_eq!(
+            rendered_format,
+            "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
+        )
+    } 
+
+    #[test]
+    fn test_thin_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = sample.thin_middle_border();
+
+        assert_eq!(
+            rendered_format,
+            "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n"
+        )
+    }
+
+    #[test]
+    fn test_thick_border() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = sample.thick_middle_border();
+
+        assert_eq!(
+            rendered_format,
+            "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n"
+        )
+    }
+
+    #[test]
+    fn test_row_format() {
+        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_format: String = sample.format_row(1);
+
+        assert_eq!(
+            rendered_format,
+            "║ 1 │ 2 │ 3 ║   │   │   ║   │   │   ║\n"
+        );
+    }
+
+    #[test]
+    fn test_board() {
+        let data: Vec<Vec<i32>> = vec![
+            vec![5, 3, 4, 6, 7, 8, 9, 1, 2],
+            vec![6, 7, 2, 1, 9, 5, 3, 4, 8],
+            vec![1, 9, 8, 3, 4, 2, 5, 6, 7],
+            vec![8, 5, 9, 7, 6, 1, 4, 2, 3],
+            vec![4, 2, 6, 8, 5, 3, 7, 9, 1],
+            vec![7, 1, 3, 9, 2, 4, 8, 5, 6],
+            vec![9, 6, 1, 5, 3, 7, 2, 8, 4],
+            vec![2, 8, 7, 4, 1, 9, 6, 3, 5],
+            vec![3, 4, 5, 2, 8, 6, 1, 7, 9],
+        ];
+        let sample: Board = Board {
+            size: 9,
+            box_size: 3,
+            cells: data
+        };
+
+        let rendered_board: String = sample.to_string();
+
+        assert_eq!(
+            rendered_board,
+            "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n\
+             ║ 5 │ 3 │ 4 ║ 6 │ 7 │ 8 ║ 9 │ 1 │ 2 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 6 │ 7 │ 2 ║ 1 │ 9 │ 5 ║ 3 │ 4 │ 8 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 1 │ 9 │ 8 ║ 3 │ 4 │ 2 ║ 5 │ 6 │ 7 ║\n\
+             ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n\
+             ║ 8 │ 5 │ 9 ║ 7 │ 6 │ 1 ║ 4 │ 2 │ 3 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 4 │ 2 │ 6 ║ 8 │ 5 │ 3 ║ 7 │ 9 │ 1 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 7 │ 1 │ 3 ║ 9 │ 2 │ 4 ║ 8 │ 5 │ 6 ║\n\
+             ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n\
+             ║ 9 │ 6 │ 1 ║ 5 │ 3 │ 7 ║ 2 │ 8 │ 4 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 2 │ 8 │ 7 ║ 4 │ 1 │ 9 ║ 6 │ 3 │ 5 ║\n\
+             ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n\
+             ║ 3 │ 4 │ 5 ║ 2 │ 8 │ 6 ║ 1 │ 7 │ 9 ║\n\
+             ╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
+        );
+    }
 }
