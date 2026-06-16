@@ -8,6 +8,14 @@ pub struct Board {
 
 impl Board {
 
+    pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
+        self.cells[row][col] = value;
+    }
+
+    pub fn clear_cell(&mut self, row: usize, col: usize) {
+        self.cells[row][col] = -1;
+    }
+
     fn format_row(&self, row_id: usize) -> String {
         let mut output = String::new();
 
