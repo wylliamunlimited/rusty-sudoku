@@ -8,6 +8,14 @@ pub struct Board {
 
 impl Board {
 
+    pub fn new(size: usize, box_size: usize) -> Self {
+        Board {
+            size,
+            box_size,
+            cells: vec![vec![-1; size]; size]
+        }
+    }
+
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
         self.cells[row][col] = value;
     }
