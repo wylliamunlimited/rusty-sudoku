@@ -73,7 +73,7 @@ with it. Rendering stays on `Board`; input and cursor logic stay out of it.
 
 - [ ] Add `App` struct wrapping `Board` with `cursor_row`, `cursor_col`, `running`
 - [ ] Replace hardcoded `(0, 0)` with cursor position for `set_cell` / `clear_cell`
-- [ ] Add letter-based navigation (`w`/`a`/`s`/`d` or `h`/`j`/`k`/`l`) via `read_line`
+- [ ] Add arrow-key navigation (Up/Down/Left/Right) via crossterm
 - [ ] Accept any digit 1–9 at cursor, not just a single test value
 
 ### Phase 2 — Raw input (crossterm, via ratatui dependency)
@@ -104,7 +104,7 @@ with it. Rendering stays on `Board`; input and cursor logic stay out of it.
 
 | Action | Keys |
 |---|---|
-| Move | Up/Down/Left/Right or `h`/`j`/`k`/`l` |
+| Move | Up/Down/Left/Right arrow keys |
 | Fill | `1`–`9` at cursor |
 | Clear | Backspace, Delete, or `0` |
 | Quit | `q` or Esc |
