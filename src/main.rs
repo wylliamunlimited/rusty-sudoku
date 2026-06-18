@@ -1,7 +1,14 @@
 mod board;
 
 use board::Board;
-use std::io::{self, Write};
+
+use crossterm::event;
+use crossterm::terminal;
+use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
+
+use std::time::Duration;
+use std::io::Write;
+use std::io;
 
 // =============================================================================
 // EXPECTED BEHAVIOR — interactive Sudoku (work-in-progress)
@@ -26,7 +33,7 @@ use std::io::{self, Write};
 // NEXT STEPS
 //   1. Track cursor state (row, col) — probably an App struct wrapping Board
 //   2. Replace hardcoded (0, 0) with cursor position for set/clear
-//   3. Add navigation commands (arrow keys or hjkl) to move cursor
+//   3. Add navigation commands (arrow keys) to move cursor
 //   4. Accept any digit 1-9 at cursor, not just "5"
 //   5. Distinguish fixed clue cells from editable cells (later)
 //
@@ -43,33 +50,72 @@ use std::io::{self, Write};
 //   - do NOT use println! for the board — Display already ends lines with \n
 //
 // INPUT CONTRACT (target)
-//   Navigation:  Up/Down/Left/Right (or h/j/k/l)
+//   Navigation:  Up/Down/Left/Right arrow keys
 //   Fill:        1-9 sets value at cursor
 //   Clear:       Backspace / Delete / 0 clears cursor cell (-1)
 //   Quit:        q or Esc
 //
 // =============================================================================
 
+fn shift_position(board: &Board, row_id: &mut usize, col_id: &mut usize, op: KeyCode) {
+    
+    match op {
+        KeyCode::Left => if *col_id > 0 {
+            *col_id -= 1;
+        },
+        KeyCode::Right => if *col_id < board.size - 1 {
+            *col_id += 1;
+        },
+        KeyCode::Up => if *row_id > 0 {
+            *row_id -= 1;
+        },
+        KeyCode::Down => if *row_id < board.size - 1 {
+            *row_id += 1;
+        },
+        _ => {}
+    }
+}
+
 fn main() -> io::Result<()> {
     let mut board: Board = Board::new(9, 3);
 
+    let mut row_id: usize = 0;
+    let mut col_id: usize = 0;
+    
+    terminal::enable_raw_mode()?;
     loop {
         // Redraw the board in place.
         print!("\x1B[2J\x1B[H");
         print!("{board}");
         io::stdout().flush()?;
 
-        // Read one command (temporary: line-based input, requires Enter).
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-
-        match input.trim() {
-            "q" => break,
-            "c" => board.clear_cell(0, 0), // TODO: use cursor col/row
-            "5" => board.set_cell(0, 0, 5), // TODO: use cursor col/row
-            _ => {}
+        if poll(Duration::from_millis(500))? {
+            match read()? {
+                Event::Key(event) if event.kind == KeyEventKind::Press => {
+                    match event.code {
+                        KeyCode::Left => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Left),
+                        KeyCode::Right => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Right),
+                        KeyCode::Down => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Down),
+                        KeyCode::Up => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Up),
+                        KeyCode::Char('1') => ,
+                        KeyCode::Char('2') => ,
+                        KeyCode::Char('3') => ,
+                        KeyCode::Char('4') => ,
+                        KeyCode::Char('5') => ,
+                        KeyCode::Char('6') => ,
+                        KeyCode::Char('7') => ,
+                        KeyCode::Char('8') => ,
+                        KeyCode::Char('9') => ,
+                        KeyCode::Backspace => ,
+                        KeyCode::Esc => break,
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
         }
     }
+    terminal::disable_raw_mode()?;
 
     Ok(())
 }
