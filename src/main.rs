@@ -57,7 +57,7 @@ use std::io;
 //
 // =============================================================================
 
-fn shift_position(board: &Board, row_id: &mut usize, col_id: &mut usize, op: KeyCode) {
+fn shift_cell(board: &Board, row_id: &mut usize, col_id: &mut usize, op: KeyCode) {
     
     match op {
         KeyCode::Left => if *col_id > 0 {
@@ -74,6 +74,10 @@ fn shift_position(board: &Board, row_id: &mut usize, col_id: &mut usize, op: Key
         },
         _ => {}
     }
+}
+
+fn fill_cell(board: &mut Board, row_id: &usize, col_id: &usize, number: i32) {
+    board.cells[*row_id][*col_id] = number;
 }
 
 fn main() -> io::Result<()> {
@@ -93,19 +97,14 @@ fn main() -> io::Result<()> {
             match read()? {
                 Event::Key(event) if event.kind == KeyEventKind::Press => {
                     match event.code {
-                        KeyCode::Left => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Left),
-                        KeyCode::Right => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Right),
-                        KeyCode::Down => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Down),
-                        KeyCode::Up => shift_position(&board, &mut row_id, &mut col_id, KeyCode::Up),
-                        KeyCode::Char('1') => ,
-                        KeyCode::Char('2') => ,
-                        KeyCode::Char('3') => ,
-                        KeyCode::Char('4') => ,
-                        KeyCode::Char('5') => ,
-                        KeyCode::Char('6') => ,
-                        KeyCode::Char('7') => ,
-                        KeyCode::Char('8') => ,
-                        KeyCode::Char('9') => ,
+                        KeyCode::Left => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Left),
+                        KeyCode::Right => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Right),
+                        KeyCode::Down => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Down),
+                        KeyCode::Up => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Up),
+                        KeyCode::Char(c @ '1'...='9') => {
+                            let digit = c.to_digit(10).unwrap() as i32;
+                            fill_cell(&mut board, &row_id, &col_id, digit);
+                        },
                         KeyCode::Backspace => ,
                         KeyCode::Esc => break,
                         _ => {}
