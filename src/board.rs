@@ -24,7 +24,28 @@ impl Board {
         self.cells[row][col] = -1;
     }
 
-    fn format_row(&self, row_id: usize) -> String {
+    pub fn render(&self, cursor: (usize, usize)) -> String {
+        let mut output = String::new();
+        output.push_str(&self.top_border());
+
+        for row_id in 0..self.size {
+
+            let hl = if row_id == cursor.0 { Some(cursor.1) } else { None };
+            output.push_str(&self.format_row(row_id, hl));
+
+            if row_id == self.size - 1 {
+                output.push_str(&self.bottom_border());
+            } else if (row_id + 1) % self.box_size == 0 {
+                output.push_str(&self.thick_middle_border());
+            } else {
+                output.push_str(&self.thin_middle_border());
+            }
+        }
+
+        output
+    }
+
+    fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
         let mut output = String::new();
 
         let roster: &Vec<i32> = &self.cells[row_id];
@@ -33,10 +54,18 @@ impl Board {
 
         for i in 0..self.size {
 
-            if roster[i] < 0 {
-                output.push_str("   ");
+            let cell = if roster[i] < 0 {
+                String::from("   ")
             } else {
-                output.push_str(&format!(" {} ", roster[i]));
+                format!(" {} ", roster[i])
+            };
+            
+            if highlight_col == Some(i) {
+                output.push_str("\x1B[7m");   // before
+                output.push_str(&cell);       // the 3 chars
+                output.push_str("\x1B[0m");   // after
+            } else {
+                output.push_str(&cell);
             }
 
             if i == self.size - 1 {
@@ -95,7 +124,7 @@ impl fmt::Display for Board {
         write!(f, "{}", self.top_border())?;
 
         for row_id in 0..self.size {
-            write!(f, "{}", self.format_row(row_id))?;
+            write!(f, "{}", self.format_row(row_id, None))?;
 
             if row_id == self.size - 1 {
                 write!(f, "{}", self.bottom_border())?;
@@ -210,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_row_format() {
-        let rendered_format: String = sample_board().format_row(1);
+        let rendered_format: String = sample_board().format_row(1, None);
 
         assert_eq!(
             rendered_format,
