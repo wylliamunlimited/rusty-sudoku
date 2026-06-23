@@ -76,14 +76,6 @@ fn shift_cell(board: &Board, row_id: &mut usize, col_id: &mut usize, op: KeyCode
     }
 }
 
-fn fill_cell(board: &mut Board, row_id: &usize, col_id: &usize, number: i32) {
-    board.cells[*row_id][*col_id] = number;
-}
-
-fn clear_cell(board: &mut Board, row_id: &usize, col_id: &usize) {
-    board.cells[*row_id][*col_id] = -1;
-}
-
 fn main() -> io::Result<()> {
     let mut board: Board = Board::new(9, 3);
 
@@ -107,9 +99,9 @@ fn main() -> io::Result<()> {
                         KeyCode::Up => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Up),
                         KeyCode::Char(c @ '1'..='9') => {
                             let digit = c.to_digit(10).unwrap() as i32;
-                            fill_cell(&mut board, &row_id, &col_id, digit);
+                            board.set_cell(row_id, col_id, digit);
                         },
-                        KeyCode::Backspace => clear_cell(&mut board, &row_id, &col_id),
+                        KeyCode::Backspace => board.clear_cell(row_id, col_id),
                         KeyCode::Esc => break,
                         _ => {}
                     }
