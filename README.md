@@ -84,8 +84,21 @@ with it. Rendering stays on `Board`; input and cursor logic stay out of it.
 
 ### Phase 3 — Cursor visual
 
-- [ ] Show which cell is selected in the render output
-- [ ] Full redraw each iteration (board + cursor overlay)
+- [x] Show which cell is selected in the render output (reverse-video highlight on the cursor cell)
+- [x] Full redraw each iteration (board + cursor overlay)
+- [ ] **Blinking cursor** — make the highlight pulse on its own, on a clock
+  - Drive the blink from wall-clock time, not loop iterations, so the rate
+    stays steady regardless of how fast keys are pressed
+  - Keep two independent pieces of state: cursor *position* (moves on arrow
+    keys) and blink *phase* (toggles on a ~500ms timer)
+  - Each frame renders highlight-on or highlight-off depending on the phase;
+    reuse the existing highlighted vs. plain render paths
+  - Poll on a shorter interval than the blink period for smoother timing
+- [ ] **No scrollback / locked view** — switch to the terminal's alternate
+  screen so redraws don't stack up in scrollback
+  - Enter alternate screen + raw mode on startup; hide the hardware cursor
+  - Restore everything on exit (show cursor, disable raw mode, leave alt
+    screen) on *every* exit path, not just the happy one
 
 ### Phase 4 — Ratatui widgets (optional polish)
 

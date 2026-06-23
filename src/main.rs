@@ -86,7 +86,7 @@ fn main() -> io::Result<()> {
     loop {
         // Redraw the board in place.
         print!("\x1B[2J\x1B[H");
-        print!("{}", board.to_string().replace('\n', "\r\n"));
+        print!("{}", board.render((row_id, col_id)).replace('\n', "\r\n"));
         io::stdout().flush()?;
 
         if poll(Duration::from_millis(500))? {
