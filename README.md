@@ -105,9 +105,31 @@ with it. Rendering stays on `Board`; input and cursor logic stay out of it.
 - [ ] Swap string rendering for Ratatui layout/widgets
 - [ ] Styling, status line, cleaner cursor highlight
 
+### Phase 4 — Seed cells + locking (next pickup)
+
+Goal: mount given numbers on the board at startup and prevent the user from
+editing them. Design decision already made — use a **parallel mask** on
+`Board`, not an enum cell type.
+
+- [ ] Add an `editable: Vec<Vec<bool>>` field to `Board`, same shape as `cells`
+  - Polarity: `editable[r][c] == true` → user may change it; seed cells `false`
+  - `Board::new` initializes all cells `true` (empty board, nothing locked)
+  - Fix the test struct literals (`sample_board`, `test_board`) — adding a
+    field breaks every `Board { .. }` literal until they include `editable`
+- [ ] Enforce locking **inside `Board`**, not in the input handler
+  - `set_cell` / `clear_cell` consult `editable` and refuse on locked cells
+    (return `bool` for now: applied vs. rejected — upgrade to `Result` later)
+  - Rationale: "a fixed clue can't change" is a board invariant; guarding the
+    mutators makes the illegal state unreachable for any caller
+  - `clear_cell` respects the lock too — Backspace must not erase a given
+- [ ] Add `set_given(row, col, value)` — writes the value *and* locks the cell
+  in one call, so the two parallel arrays can never drift out of sync
+- [ ] Seed generation — fill some `Given` cells at startup via `set_given`
+- [ ] Rendering unchanged for now (locked cells look the same; dim/bold the
+  givens is later polish)
+
 ### Phase 5 — Game rules (later)
 
-- [ ] Distinguish fixed clue cells from editable cells
 - [ ] Move validation (row, column, box constraints)
 - [ ] Self-correcting / undo on invalid input
 - [ ] Variable board sizes (4×4, 16×16, 25×25, etc.)
