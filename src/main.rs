@@ -2,11 +2,11 @@ mod board;
 
 use board::Board;
 
-use crossterm::event;
 use crossterm::terminal;
 use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
+use crossterm::{execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::io::Write;
 use std::io;
 
@@ -81,12 +81,23 @@ fn main() -> io::Result<()> {
 
     let mut row_id: usize = 0;
     let mut col_id: usize = 0;
+    let mut highlight_on: bool = false;
+    let mut last_blink_time = Instant::now();
+    const BLINK_INTERVAL: u64 = 500; // ms 
     
+    execute!(io::stdout(), EnterAlternateScreen)?;
     terminal::enable_raw_mode()?;
     loop {
+
+        if last_blink_time.elapsed() >= Duration::from_millis(BLINK_INTERVAL) {
+            highlight_on = !highlight_on;
+            last_blink_time = Instant::now();
+        }
+
         // Redraw the board in place.
         print!("\x1B[2J\x1B[H");
-        print!("{}", board.render((row_id, col_id)).replace('\n', "\r\n"));
+        print!("{}", board.render((row_id, col_id), highlight_on).replace('\n', "\r\n"));
+        print!("\nEnter 'q' to exit this window...");
         io::stdout().flush()?;
 
         if poll(Duration::from_millis(500))? {
@@ -102,7 +113,7 @@ fn main() -> io::Result<()> {
                             board.set_cell(row_id, col_id, digit);
                         },
                         KeyCode::Backspace => board.clear_cell(row_id, col_id),
-                        KeyCode::Esc => break,
+                        KeyCode::Char('q') => break,
                         _ => {}
                     }
                 }
@@ -111,6 +122,7 @@ fn main() -> io::Result<()> {
         }
     }
     terminal::disable_raw_mode()?;
+    execute!(io::stdout(), LeaveAlternateScreen)?;
 
     Ok(())
 }

@@ -24,13 +24,13 @@ impl Board {
         self.cells[row][col] = -1;
     }
 
-    pub fn render(&self, cursor: (usize, usize)) -> String {
+    pub fn render(&self, cursor: (usize, usize), blink: bool) -> String {
         let mut output = String::new();
         output.push_str(&self.top_border());
 
         for row_id in 0..self.size {
 
-            let hl = if row_id == cursor.0 { Some(cursor.1) } else { None };
+            let hl = if row_id == cursor.0 && blink { Some(cursor.1) } else { None };
             output.push_str(&self.format_row(row_id, hl));
 
             if row_id == self.size - 1 {
