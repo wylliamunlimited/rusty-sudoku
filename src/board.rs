@@ -16,6 +16,10 @@ impl Board {
         }
     }
 
+    pub fn seed(&mut self) {
+        
+    }
+
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
         self.cells[row][col] = value;
     }
