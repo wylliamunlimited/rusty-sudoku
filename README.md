@@ -125,6 +125,7 @@ editing them. Design decision already made — use a **parallel mask** on
 - [ ] Add `set_given(row, col, value)` — writes the value *and* locks the cell
   in one call, so the two parallel arrays can never drift out of sync
 - [ ] Seed generation — fill some `Given` cells at startup via `set_given`
+  (see [Sudoku solution generation (proposal)](#sudoku-solution-generation-proposal))
 - [ ] Rendering unchanged for now (locked cells look the same; dim/bold the
   givens is later polish)
 
@@ -134,6 +135,154 @@ editing them. Design decision already made — use a **parallel mask** on
 - [ ] Self-correcting / undo on invalid input
 - [ ] Variable board sizes (4×4, 16×16, 25×25, etc.)
 - [ ] Puzzle generation and difficulty levels
+  (see [Sudoku solution generation (proposal)](#sudoku-solution-generation-proposal))
+
+## Sudoku solution generation (proposal)
+
+Design note for how to produce valid complete grids and derive playable puzzles.
+Not implemented yet — this section records the intended approach before writing
+code.
+
+### Two separate problems
+
+| Problem | Output | Used for |
+|---|---|---|
+| **Solution generation** | A fully filled, rule-valid grid | Hidden answer; source of truth for givens |
+| **Puzzle seeding** | A partial grid with locked clue cells | What the player sees at startup |
+
+Validity (each row, column, and box contains 1–N exactly once) is necessary
+but not sufficient for a good game. Random digits in random cells almost never
+works. The reliable pipeline is:
+
+```text
+generate full solution  →  remove clues + verify uniqueness  →  set_given() for survivors
+```
+
+Phase 4 (`set_given`, `editable` mask) handles the last step. Phase 5 adds move
+validation. This proposal covers the first two steps.
+
+### Recommended approach: diagonal boxes + backtracking
+
+**Primary method for `rusty-sudoku`.** Fast enough for startup generation on a
+9×9 board, easy to test, and generalizes to other square box sizes.
+
+**Step 1 — seed the diagonal boxes.** On a 9×9 grid, the three boxes at
+`(0,0)`, `(1,1)`, and `(2,2)` share no rows or columns with each other. Fill
+each with a random permutation of 1–9. This gives a large valid partial state
+with zero backtracking.
+
+**Step 2 — complete the grid.** Walk remaining empty cells in a fixed order
+(e.g. row-major). For each cell, try digits 1–9 in shuffled order. Skip any
+digit that conflicts with the current row, column, or box. Recurse; backtrack on
+dead ends. The first complete assignment is a valid solution.
+
+**Step 3 — (optional) diversify.** To avoid generating the same shape every
+run, apply random **validity-preserving transforms** to the finished grid:
+
+- Relabel digits (e.g. swap all 1s and 7s)
+- Swap rows within a band, or swap entire bands
+- Swap columns within a stack, or swap entire stacks
+- Rotate or mirror the board
+
+Any combination of these yields another legal solution without re-running search.
+
+**Why this over naive backtracking from an empty board?** Diagonal seeding
+eliminates most early conflicts, so completion typically finishes in
+milliseconds. Pure random fill-from-scratch is correct but noticeably slower and
+less predictable.
+
+### Alternative: transform a canonical solution
+
+Keep one hardcoded solved grid (or load it once). Apply the transforms above to
+produce variety. Cheapest runtime cost — no search at all — but every puzzle
+shares the same underlying pattern unless transforms are applied aggressively.
+Good as a fallback or for tests; less ideal as the only production generator.
+
+### Alternative: naive backtracking from empty
+
+Fill cells in order, try shuffled digits, backtrack on conflict. Correct and
+simple to implement, but the search space is larger than diagonal seeding.
+Useful as a reference implementation and for verifying other generators.
+
+### Puzzle seeding (givens from a solution)
+
+A full solution is not a puzzle. To produce startup givens:
+
+1. Start from the complete solution (hidden from the player).
+2. Remove values from cells one at a time (or in symmetric pairs for aesthetics).
+3. After each removal, ask: **does this partial grid have exactly one
+   solution?** If yes, keep the removal; if ambiguous or unsolvable, put the
+   clue back.
+4. Stop at a target clue count or difficulty threshold.
+5. Call `set_given(row, col, value)` for every surviving clue.
+
+**Uniqueness check** requires a solver that can count solutions (stop at 2).
+Reuse the same backtracking engine from solution generation, but run it on the
+partial grid with givens treated as fixed.
+
+**Difficulty** (later) is not the same as clue count. Two puzzles with 28 givens
+can differ sharply. Grading by required techniques (singles, pairs, X-wing, …)
+is out of scope for the first generator; start with a fixed clue count (e.g.
+30–40 for 9×9) and add grading once validation and seeding work.
+
+### Validation dependency
+
+Solution generation and puzzle seeding both need **conflict detection**: can
+digit `d` go at `(row, col)` given current cell values? This is the same check
+Phase 5 will use for player moves. Build it once on `Board`:
+
+```text
+is_valid_placement(row, col, digit) -> bool
+```
+
+Generation, seeding, and live input validation should all call the same function
+so the rules never drift apart.
+
+### Proposed module layout
+
+Keep generation out of the TUI loop and out of rendering:
+
+```text
+src/
+  board.rs       — grid, rendering, is_valid_placement, set_given
+  generator.rs   — generate_solution(), seed_puzzle(solution, clue_count)
+  main.rs        — App loop; calls generator at startup (or loads a preset)
+```
+
+`Board::seed()` (if kept) should delegate to `generator` rather than embed
+search logic on the struct.
+
+### Phased implementation order
+
+| Step | Delivers | Depends on |
+|---|---|---|
+| 1. `is_valid_placement` | Shared rule check | Phase 5 validation |
+| 2. `generate_solution` | Full legal grid | Step 1 |
+| 3. `count_solutions` / uniqueness | Puzzle safety check | Step 2 |
+| 4. `seed_puzzle` | Partial grid + clue count | Steps 2–3, Phase 4 `set_given` |
+| 5. Transforms + difficulty | Variety and grading | Steps 2–4 |
+
+**MVP shortcut:** ship a few hand-authored puzzles (hardcoded givens) while
+Steps 1–4 are in progress. Swap in runtime generation once uniqueness checks
+pass tests.
+
+### Testing strategy
+
+- **`is_valid_placement`:** known valid/invalid placements on a partially filled
+  board.
+- **`generate_solution`:** output passes full-grid validation (every row, col,
+  box is a permutation of 1–9); run N times and assert not all identical.
+- **`seed_puzzle`:** seeded partial grid has exactly one solution; all givens
+  match the source solution.
+- **Regression:** solver completes a known published puzzle to the expected
+  answer.
+
+### Non-goals (for now)
+
+- Minimum-clue puzzles (17-givens exist but are often unpleasant to play)
+- Technique-based difficulty rating
+- 16×16 / 25×25 generation (same algorithms apply once box size generalizes)
+- Persistent puzzle databases or daily-puzzle APIs
 
 ## Target input spec
 
