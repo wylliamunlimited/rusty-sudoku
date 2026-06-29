@@ -186,6 +186,12 @@ impl BorderStyle {
 mod tests {
     use super::*;
 
+    // TODO: test set_cell & clear_cell
+
+
+    // TODO: render() w/ & w/out hl
+
+
     fn sample_board() -> Board {
         let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
         let sample: Board = Board {
@@ -248,6 +254,17 @@ mod tests {
     }
 
     #[test]
+    fn test_row_format_with_col() {
+        // Blink is handled by render(), not format_row — Some(col) always highlights.
+        let rendered_format: String = sample_board().format_row(1, Some(1));
+
+        assert_eq!(
+            rendered_format,
+            "║ 1 │\x1B[7m 2 \x1B[0m│ 3 ║   │   │   ║   │   │   ║\n"
+        );
+    }
+
+    #[test]
     fn test_board() {
         let data: Vec<Vec<i32>> = vec![
             vec![5, 3, 4, 6, 7, 8, 9, 1, 2],
@@ -290,5 +307,16 @@ mod tests {
              ║ 3 │ 4 │ 5 ║ 2 │ 8 │ 6 ║ 1 │ 7 │ 9 ║\n\
              ╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
         );
+    }
+
+    #[test]
+    fn test_board_new() {
+        let board = Board::new(9, 3);
+
+        for r in 0..board.size {
+            for c in 0..board.size {
+                assert_eq!(board.cells[r][c], -1);
+            }
+        }
     }
 }
