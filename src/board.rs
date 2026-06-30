@@ -186,12 +186,6 @@ impl BorderStyle {
 mod tests {
     use super::*;
 
-    // TODO: test set_cell & clear_cell
-
-
-    // TODO: render() w/ & w/out hl
-
-
     fn sample_board() -> Board {
         let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
         let sample: Board = Board {
@@ -380,5 +374,31 @@ mod tests {
              ║   │   │   ║   │   │   ║   │   │   ║\n\
              ╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
         );
+    }
+
+    #[test]
+    fn test_set_cell() {
+        let mut board = Board::new(9, 3);
+
+        board.set_cell(3, 3, 5);
+
+        assert_eq!(board.cells[3][3], 5);
+    }
+
+    #[test]
+    fn test_clear_cell() {
+        let mut board = Board::new(9, 3);
+
+        board.set_cell(3, 3, 5);
+        board.set_cell(3, 8, 3);
+        board.set_cell(8, 4, 6);
+        board.set_cell(5, 1, 7);
+
+        board.clear_cell(3, 3);
+
+        assert_eq!(board.cells[3][3], -1);
+        assert_eq!(board.cells[3][8], 3);
+        assert_eq!(board.cells[8][4], 6);
+        assert_eq!(board.cells[5][1], 7);
     }
 }
