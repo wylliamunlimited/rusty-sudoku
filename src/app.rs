@@ -22,12 +22,11 @@ impl App {
     const BLINK_INTERVAL: u64 = 500; // 500ms
 
     pub fn new(
-        board: Board, 
-        cursor: (usize, usize)
+        board: Board
     ) -> Self {
         App {
             board,
-            cursor,
+            cursor: (0, 0),
             highlight_on: false, // Started with no blink
             last_blink_time: Instant::now() // Ticking since instantiation
         }
