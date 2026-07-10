@@ -1,56 +1,29 @@
 mod board;
+mod app;
 
 use board::Board;
+use app::{App, Direction};
 
-use crossterm::terminal;
 use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
-use crossterm::{execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
+use crossterm::{execute, terminal, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use std::io::Write;
 use std::io;
 
 
-fn shift_cell(board: &Board, row_id: &mut usize, col_id: &mut usize, op: KeyCode) {
-    
-    match op {
-        KeyCode::Left => if *col_id > 0 {
-            *col_id -= 1;
-        },
-        KeyCode::Right => if *col_id < board.size - 1 {
-            *col_id += 1;
-        },
-        KeyCode::Up => if *row_id > 0 {
-            *row_id -= 1;
-        },
-        KeyCode::Down => if *row_id < board.size - 1 {
-            *row_id += 1;
-        },
-        _ => {}
-    }
-}
-
 fn main() -> io::Result<()> {
-    let mut board: Board = Board::new(9, 3);
-
-    let mut row_id: usize = 0;
-    let mut col_id: usize = 0;
-    let mut highlight_on: bool = false;
-    let mut last_blink_time = Instant::now();
-    const BLINK_INTERVAL: u64 = 500; // ms 
+    let mut app: App = App::new(Board::new(9, 3));
     
     execute!(io::stdout(), EnterAlternateScreen)?;
     terminal::enable_raw_mode()?;
     loop {
 
-        if last_blink_time.elapsed() >= Duration::from_millis(BLINK_INTERVAL) {
-            highlight_on = !highlight_on;
-            last_blink_time = Instant::now();
-        }
+        app.tick();
 
         // Redraw the board in place.
         print!("\x1B[2J\x1B[H");
-        print!("{}", board.render((row_id, col_id), highlight_on).replace('\n', "\r\n"));
+        print!("{}", app.view().replace('\n', "\r\n"));
         print!("\nEnter 'q' to exit this window...");
         io::stdout().flush()?;
 
@@ -58,15 +31,15 @@ fn main() -> io::Result<()> {
             match read()? {
                 Event::Key(event) if event.kind == KeyEventKind::Press => {
                     match event.code {
-                        KeyCode::Left => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Left),
-                        KeyCode::Right => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Right),
-                        KeyCode::Down => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Down),
-                        KeyCode::Up => shift_cell(&board, &mut row_id, &mut col_id, KeyCode::Up),
+                        KeyCode::Left => app.shift_cursor(Direction::Left),
+                        KeyCode::Right => app.shift_cursor(Direction::Right),
+                        KeyCode::Down => app.shift_cursor(Direction::Down),
+                        KeyCode::Up => app.shift_cursor(Direction::Up),
                         KeyCode::Char(c @ '1'..='9') => {
                             let digit = c.to_digit(10).unwrap() as i32;
-                            board.set_cell(row_id, col_id, digit);
+                            app.set_current_cell(digit);
                         },
-                        KeyCode::Backspace => board.clear_cell(row_id, col_id),
+                        KeyCode::Backspace => app.clear_current_cell(),
                         KeyCode::Char('q') => break,
                         _ => {}
                     }
