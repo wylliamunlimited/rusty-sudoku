@@ -1,13 +1,7 @@
 
 use crate::board::Board;
 
-use crossterm::terminal;
-use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
-use crossterm::{execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
-
 use std::time::{Duration, Instant};
-use std::io::Write;
-use std::io;
 
 
 pub struct App {
@@ -29,8 +23,7 @@ impl App {
 
     pub fn new(
         board: Board, 
-        cursor: (usize, usize), 
-        highlight_on: bool
+        cursor: (usize, usize)
     ) -> Self {
         App {
             board,
