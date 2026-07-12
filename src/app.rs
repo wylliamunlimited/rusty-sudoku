@@ -15,6 +15,13 @@ pub enum Direction {
     Up, Down, Left, Right
 }
 
+pub enum Action {
+    Move(Direction),
+    SetDigit(i32),
+    ClearCell,
+    Quit
+}
+
 impl App {
 
     // Game State / Logics Warehouse
