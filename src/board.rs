@@ -7,12 +7,11 @@ pub struct Board {
 }
 
 impl Board {
-
     pub fn new(size: usize, box_size: usize) -> Self {
         Board {
             size,
             box_size,
-            cells: vec![vec![-1; size]; size]
+            cells: vec![vec![-1; size]; size],
         }
     }
 
@@ -29,8 +28,11 @@ impl Board {
         output.push_str(&self.top_border());
 
         for row_id in 0..self.size {
-
-            let hl = if row_id == cursor.0 && blink { Some(cursor.1) } else { None };
+            let hl = if row_id == cursor.0 && blink {
+                Some(cursor.1)
+            } else {
+                None
+            };
             output.push_str(&self.format_row(row_id, hl));
 
             if row_id == self.size - 1 {
@@ -53,17 +55,16 @@ impl Board {
         output.push('║');
 
         for i in 0..self.size {
-
             let cell = if roster[i] < 0 {
                 String::from("   ")
             } else {
                 format!(" {} ", roster[i])
             };
-            
+
             if highlight_col == Some(i) {
-                output.push_str("\x1B[7m");   // before
-                output.push_str(&cell);       // the 3 chars
-                output.push_str("\x1B[0m");   // after
+                output.push_str("\x1B[7m"); // before
+                output.push_str(&cell); // the 3 chars
+                output.push_str("\x1B[0m"); // after
             } else {
                 output.push_str(&cell);
             }
@@ -76,19 +77,19 @@ impl Board {
                 output.push('│');
             }
         }
-        
+
         output.push('\n');
         output
     }
 
     fn border(&self, style: &BorderStyle) -> String {
         let mut output = String::new();
-    
+
         output.push(style.left);
-    
+
         for i in 0..self.size {
             output.push_str(style.fill);
-    
+
             if i == self.size - 1 {
                 output.push(style.right);
             } else if (i + 1) % self.box_size == 0 {
@@ -97,7 +98,7 @@ impl Board {
                 output.push(style.cell);
             }
         }
-    
+
         output.push('\n');
         output
     }
@@ -181,7 +182,6 @@ impl BorderStyle {
     };
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,50 +201,35 @@ mod tests {
     fn test_top_border() {
         let rendered_format: String = sample_board().top_border();
 
-        assert_eq!(
-            rendered_format,
-            "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n"
-        );
+        assert_eq!(rendered_format, "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n");
     }
 
     #[test]
     fn test_bottom_border() {
         let rendered_format: String = sample_board().bottom_border();
 
-        assert_eq!(
-            rendered_format,
-            "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
-        )
-    } 
+        assert_eq!(rendered_format, "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n")
+    }
 
     #[test]
     fn test_thin_border() {
         let rendered_format: String = sample_board().thin_middle_border();
 
-        assert_eq!(
-            rendered_format,
-            "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n"
-        )
+        assert_eq!(rendered_format, "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n")
     }
 
     #[test]
     fn test_thick_border() {
         let rendered_format: String = sample_board().thick_middle_border();
 
-        assert_eq!(
-            rendered_format,
-            "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n"
-        )
+        assert_eq!(rendered_format, "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n")
     }
 
     #[test]
     fn test_row_format() {
         let rendered_format: String = sample_board().format_row(1, None);
 
-        assert_eq!(
-            rendered_format,
-            "║ 1 │ 2 │ 3 ║   │   │   ║   │   │   ║\n"
-        );
+        assert_eq!(rendered_format, "║ 1 │ 2 │ 3 ║   │   │   ║   │   │   ║\n");
     }
 
     #[test]
@@ -274,7 +259,7 @@ mod tests {
         let sample: Board = Board {
             size: 9,
             box_size: 3,
-            cells: data
+            cells: data,
         };
 
         let rendered_board: String = sample.to_string();
@@ -317,7 +302,7 @@ mod tests {
     #[test]
     fn test_board_render() {
         let board = Board::new(9, 3);
-        
+
         // blink=false → no highlight; empty board matches Display
         let rendered_board: String = board.render((3, 3), false);
 
@@ -349,7 +334,7 @@ mod tests {
     #[test]
     fn test_board_render_with_blink() {
         let board = Board::new(9, 3);
-        
+
         let rendered_board: String = board.render((3, 3), true);
 
         assert_eq!(

@@ -1,64 +1,60 @@
-
 use crate::board::Board;
 
 use std::time::{Duration, Instant};
-
 
 pub struct App {
     pub(crate) board: Board,
     pub(crate) cursor: (usize, usize),
     pub(crate) highlight_on: bool,
-    pub(crate) last_blink_time: Instant
+    pub(crate) last_blink_time: Instant,
 }
 
 pub enum Direction {
-    Up, Down, Left, Right
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 pub enum Action {
     Move(Direction),
     SetDigit(i32),
     ClearCell,
-    Quit
+    Quit,
 }
 
 impl App {
-
     // Game State / Logics Warehouse
 
     const BLINK_INTERVAL: u64 = 500; // 500ms
 
-    pub fn new(
-        board: Board
-    ) -> Self {
+    pub fn new(board: Board) -> Self {
         App {
             board,
             cursor: (0, 0),
-            highlight_on: false, // Started with no blink
-            last_blink_time: Instant::now() // Ticking since instantiation
+            highlight_on: false,             // Started with no blink
+            last_blink_time: Instant::now(), // Ticking since instantiation
         }
     }
 
     pub fn handle_action(&mut self, action: Action) -> bool {
-
         match action {
             Action::Move(d) => {
                 self.shift_cursor(d);
                 true
-            },
+            }
             Action::SetDigit(val) => {
                 self.set_current_cell(val);
                 true
-            },
+            }
             Action::ClearCell => {
                 self.clear_current_cell();
                 true
-            },
+            }
             Action::Quit => {
                 false // Terminate
             }
         }
-
     }
 
     pub fn tick(&mut self) {
@@ -73,22 +69,28 @@ impl App {
     }
 
     pub fn shift_cursor(&mut self, op: Direction) {
-
         match op {
-            Direction::Left => if self.cursor.1 > 0 {
-                self.cursor.1 -= 1;
-            },
-            Direction::Right => if self.cursor.1 < self.board.size - 1 {
-                self.cursor.1 += 1;
-            },
-            Direction::Up => if self.cursor.0 > 0 {
-                self.cursor.0 -= 1;
-            },
-            Direction::Down => if self.cursor.0 < self.board.size - 1 {
-                self.cursor.0 += 1;
+            Direction::Left => {
+                if self.cursor.1 > 0 {
+                    self.cursor.1 -= 1;
+                }
+            }
+            Direction::Right => {
+                if self.cursor.1 < self.board.size - 1 {
+                    self.cursor.1 += 1;
+                }
+            }
+            Direction::Up => {
+                if self.cursor.0 > 0 {
+                    self.cursor.0 -= 1;
+                }
+            }
+            Direction::Down => {
+                if self.cursor.0 < self.board.size - 1 {
+                    self.cursor.0 += 1;
+                }
             }
         }
-
     }
 
     pub fn set_current_cell(&mut self, value: i32) {
@@ -98,5 +100,4 @@ impl App {
     pub fn clear_current_cell(&mut self) {
         self.board.clear_cell(self.cursor.0, self.cursor.1);
     }
-
 }
