@@ -39,6 +39,28 @@ impl App {
         }
     }
 
+    pub fn handle_action(&mut self, action: Action) -> bool {
+
+        match action {
+            Action::Move(d) => {
+                self.shift_cursor(d);
+                true
+            },
+            Action::SetDigit(val) => {
+                self.set_current_cell(val);
+                true
+            },
+            Action::ClearCell => {
+                self.clear_current_cell();
+                true
+            },
+            Action::Quit => {
+                false // Terminate
+            }
+        }
+
+    }
+
     pub fn tick(&mut self) {
         if self.last_blink_time.elapsed() >= Duration::from_millis(Self::BLINK_INTERVAL) {
             self.highlight_on = !self.highlight_on;
