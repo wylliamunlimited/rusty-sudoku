@@ -1,6 +1,6 @@
 
 use crate::app::{Action, Direction, App};
-use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
+use crossterm::event::{Event, KeyCode, KeyEventKind, read};
 use crossterm::{execute, terminal, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
 
 use std::io;
@@ -10,14 +10,14 @@ pub struct TerminalGuard;
 
 impl TerminalGuard {
 
-    fn new() -> io::Result<Self> {
+    pub fn new() -> io::Result<Self> {
         execute!(io::stdout(), EnterAlternateScreen)?;
         terminal::enable_raw_mode()?;
 
         Ok(TerminalGuard)
     }
 
-    fn key_to_action(&self, key: KeyCode) -> Option<Action> {
+    pub fn key_to_action(&self, key: KeyCode) -> Option<Action> {
         // Translation Function
 
         match key {
@@ -41,7 +41,7 @@ impl TerminalGuard {
 
     }
 
-    fn handle_op(&self) -> io::Result<Option<Action>> {
+    pub fn handle_op(&self) -> io::Result<Option<Action>> {
 
         let action = match read()? {
             Event::Key(event) if event.kind == KeyEventKind::Press => {
@@ -54,7 +54,7 @@ impl TerminalGuard {
 
     }
 
-    fn draw(&self, app: &App) -> io::Result<()> {
+    pub fn draw(&self, app: &App) -> io::Result<()> {
         // Include the redraw logics
         print!("\x1B[2J\x1B[H");
         print!("{}", app.view().replace('\n', "\r\n"));
