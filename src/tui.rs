@@ -54,6 +54,15 @@ impl TerminalGuard {
 
     }
 
+    fn draw(&self, app: &App) -> io::Result<()> {
+        // Include the redraw logics
+        print!("\x1B[2J\x1B[H");
+        print!("{}", app.view().replace('\n', "\r\n"));
+        print!("\nEnter 'q' to exit this window...");
+        io::stdout().flush()?;
+
+        Ok(())
+    }
 }
 
 impl Drop for TerminalGuard {
