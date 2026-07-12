@@ -1,30 +1,28 @@
-mod board;
 mod app;
+mod board;
 mod tui;
 
-use board::Board;
 use app::App;
+use board::Board;
 
-use tui::TerminalGuard;
 use crossterm::event::poll;
+use tui::TerminalGuard;
 
-use std::time::Duration;
 use std::io;
-
+use std::time::Duration;
 
 fn main() -> io::Result<()> {
     let mut app: App = App::new(Board::new(9, 3));
     let guard: TerminalGuard = TerminalGuard::new()?;
 
     loop {
-
         app.tick();
         guard.draw(&app)?;
 
         if poll(Duration::from_millis(500))? {
             if let Some(action) = guard.handle_op()? {
                 if !app.handle_action(action) {
-                    break
+                    break;
                 }
             }
         }

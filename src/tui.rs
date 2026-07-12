@@ -1,7 +1,9 @@
-
-use crate::app::{Action, Direction, App};
+use crate::app::{Action, App, Direction};
 use crossterm::event::{Event, KeyCode, KeyEventKind, read};
-use crossterm::{execute, terminal, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
+use crossterm::{
+    execute, terminal,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
+};
 
 use std::io;
 use std::io::Write;
@@ -9,7 +11,6 @@ use std::io::Write;
 pub struct TerminalGuard;
 
 impl TerminalGuard {
-
     pub fn new() -> io::Result<Self> {
         execute!(io::stdout(), EnterAlternateScreen)?;
         terminal::enable_raw_mode()?;
@@ -26,7 +27,7 @@ impl TerminalGuard {
             KeyCode::Right => Some(Action::Move(Direction::Right)),
             KeyCode::Up => Some(Action::Move(Direction::Up)),
             KeyCode::Down => Some(Action::Move(Direction::Down)),
-            
+
             // Exit
             KeyCode::Char('q') => Some(Action::Quit),
 
@@ -35,23 +36,20 @@ impl TerminalGuard {
             KeyCode::Char(c @ '1'..='9') => {
                 let digit = c.to_digit(10).unwrap() as i32;
                 Some(Action::SetDigit(digit))
-            },
-            _ => None
+            }
+            _ => None,
         }
-
     }
 
     pub fn handle_op(&self) -> io::Result<Option<Action>> {
-
         let action = match read()? {
             Event::Key(event) if event.kind == KeyEventKind::Press => {
                 self.key_to_action(event.code)
-            },
-            _ => None
+            }
+            _ => None,
         };
 
         Ok(action)
-
     }
 
     pub fn draw(&self, app: &App) -> io::Result<()> {
