@@ -1,12 +1,8 @@
-mod app;
-mod board;
-mod tui;
-
-use app::App;
-use board::Board;
+use rusty_sudoku::app::App;
+use rusty_sudoku::board::Board;
 
 use crossterm::event::poll;
-use tui::TerminalGuard;
+use rusty_sudoku::tui::TerminalGuard;
 
 use std::io;
 use std::time::Duration;
