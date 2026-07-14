@@ -3,7 +3,7 @@ use std::fmt;
 pub struct Board {
     pub(crate) size: usize,
     pub(crate) box_size: usize,
-    pub(crate) cells: Vec<Vec<i32>>,
+    pub(crate) cells: Vec<Vec<Option<i32>>>,
 }
 
 impl Board {
@@ -11,20 +11,16 @@ impl Board {
         Board {
             size,
             box_size,
-            cells: vec![vec![-1; size]; size],
+            cells: vec![vec![None; size]; size],
         }
     }
 
-    pub fn seed(&mut self) {
-        
-    }
-
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
-        self.cells[row][col] = value;
+        self.cells[row][col] = Some(value);
     }
 
     pub fn clear_cell(&mut self, row: usize, col: usize) {
-        self.cells[row][col] = -1;
+        self.cells[row][col] = None;
     }
 
     pub fn render(&self, cursor: (usize, usize), blink: bool) -> String {
@@ -54,15 +50,14 @@ impl Board {
     fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
         let mut output = String::new();
 
-        let roster: &Vec<i32> = &self.cells[row_id];
+        let roster: &Vec<Option<i32>> = &self.cells[row_id];
 
         output.push('║');
 
         for i in 0..self.size {
-            let cell = if roster[i] < 0 {
-                String::from("   ")
-            } else {
-                format!(" {} ", roster[i])
+            let cell = match roster[i] {
+                None => String::from("   "),
+                Some(n) => format!(" {n} "),
             };
 
             if highlight_col == Some(i) {
