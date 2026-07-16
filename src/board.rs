@@ -1,4 +1,5 @@
 use std::fmt;
+use std::collections::HashSet;
 
 pub struct Board {
     pub(crate) size: usize,
@@ -13,6 +14,19 @@ impl Board {
             box_size,
             cells: vec![vec![None; size]; size],
         }
+    }
+
+    fn has_no_duplicates(candidates: &[Option<i32>]) -> bool {
+        let mut seen = HashSet::new();
+
+        for cell in candidates {
+            if let Some(d) = cell {
+                if !seen.insert(d) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
