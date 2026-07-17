@@ -75,6 +75,15 @@ impl Board {
         self.cells[row][col] = Some(value);
     }
 
+    pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> bool {
+        if self.is_valid_move(row, col, value) {
+            self.set_cell(row, col, value);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn clear_cell(&mut self, row: usize, col: usize) {
         self.cells[row][col] = None;
     }
