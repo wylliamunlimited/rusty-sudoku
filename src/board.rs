@@ -110,23 +110,21 @@ impl Board {
 
         output.push('║');
 
-        for i in 0..self.size {
-            let cell = match roster[i] {
+        for (i, cell) in roster.iter().enumerate() {
+            let cell_str = match cell {
                 None => String::from("   "),
                 Some(n) => format!(" {n} "),
             };
 
             if highlight_col == Some(i) {
                 output.push_str("\x1B[7m"); // before
-                output.push_str(&cell); // the 3 chars
+                output.push_str(&cell_str); // the 3 chars
                 output.push_str("\x1B[0m"); // after
             } else {
-                output.push_str(&cell);
+                output.push_str(&cell_str);
             }
 
-            if i == self.size - 1 {
-                output.push('║');
-            } else if (i + 1) % self.box_size == 0 {
+            if i == self.size - 1 || (i + 1) % self.box_size == 0 {
                 output.push('║');
             } else {
                 output.push('│');
