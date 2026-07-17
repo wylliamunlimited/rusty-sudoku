@@ -29,6 +29,50 @@ impl Board {
         true
     }
 
+    pub fn is_valid_move(&self, row: usize, col: usize, val: i32) -> bool {
+
+        // Row
+        let mut trial_list: Vec<Option<i32>> = self.cells[row].clone();
+        if trial_list[col].is_some() {
+            return false; // A value already exists
+        } 
+        trial_list[col] = Some(val);
+        if !Self::has_no_duplicates(&trial_list) {
+            return false; // Row conflicts
+        }
+
+        // Column
+        let mut trial_list: Vec<Option<i32>> = self.cells.iter().map(|row| row[col]).collect();
+        if trial_list[row].is_some() {
+            return false; // A value already exists
+        } 
+        trial_list[row] = Some(val);
+        if !Self::has_no_duplicates(&trial_list) {
+            return false; // Row conflicts
+        }
+
+        // Box
+        let mut trial_list: Vec<Option<i32>> = Vec::new();
+        let box_row = (row / self.box_size) * self.box_size;
+        let box_col = (col / self.box_size) * self.box_size;
+
+        for r in box_row..box_row + self.box_size {
+            for c in box_col..box_col + self.box_size {
+                if r == row && c == col {
+                    trial_list.push(Some(val));
+                } else {
+                    trial_list.push(self.cells[r][c]);
+                }
+            }
+        }
+        if !Self::has_no_duplicates(&trial_list) {
+            return false;
+        }
+
+        true
+
+    }
+
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
         self.cells[row][col] = Some(value);
     }
@@ -200,7 +244,7 @@ mod tests {
     use super::*;
 
     fn sample_board() -> Board {
-        let data: Vec<Vec<i32>> = vec![vec![1, 2, 3, -1, -1, -1, -1, -1, -1]; 9];
+        let data: Vec<Vec<Option<i32>>> = vec![vec![Some(1), Some(2), Some(3), None, None, None, None, None, None]; 9];
         let sample: Board = Board {
             size: 9,
             box_size: 3,
@@ -258,16 +302,16 @@ mod tests {
 
     #[test]
     fn test_board() {
-        let data: Vec<Vec<i32>> = vec![
-            vec![5, 3, 4, 6, 7, 8, 9, 1, 2],
-            vec![6, 7, 2, 1, 9, 5, 3, 4, 8],
-            vec![1, 9, 8, 3, 4, 2, 5, 6, 7],
-            vec![8, 5, 9, 7, 6, 1, 4, 2, 3],
-            vec![4, 2, 6, 8, 5, 3, 7, 9, 1],
-            vec![7, 1, 3, 9, 2, 4, 8, 5, 6],
-            vec![9, 6, 1, 5, 3, 7, 2, 8, 4],
-            vec![2, 8, 7, 4, 1, 9, 6, 3, 5],
-            vec![3, 4, 5, 2, 8, 6, 1, 7, 9],
+        let data: Vec<Vec<Option<i32>>> = vec![
+            vec![Some(5), Some(3), Some(4), Some(6), Some(7), Some(8), Some(9), Some(1), Some(2)],
+            vec![Some(6), Some(7), Some(2), Some(1), Some(9), Some(5), Some(3), Some(4), Some(8)],
+            vec![Some(1), Some(9), Some(8), Some(3), Some(4), Some(2), Some(5), Some(6), Some(7)],
+            vec![Some(8), Some(5), Some(9), Some(7), Some(6), Some(1), Some(4), Some(2), Some(3)],
+            vec![Some(4), Some(2), Some(6), Some(8), Some(5), Some(3), Some(7), Some(9), Some(1)],
+            vec![Some(7), Some(1), Some(3), Some(9), Some(2), Some(4), Some(8), Some(5), Some(6)],
+            vec![Some(9), Some(6), Some(1), Some(5), Some(3), Some(7), Some(2), Some(8), Some(4)],
+            vec![Some(2), Some(8), Some(7), Some(4), Some(1), Some(9), Some(6), Some(3), Some(5)],
+            vec![Some(3), Some(4), Some(5), Some(2), Some(8), Some(6), Some(1), Some(7), Some(9)],
         ];
         let sample: Board = Board {
             size: 9,
@@ -307,7 +351,7 @@ mod tests {
 
         for r in 0..board.size {
             for c in 0..board.size {
-                assert_eq!(board.cells[r][c], -1);
+                assert_eq!(board.cells[r][c], None);
             }
         }
     }
@@ -380,7 +424,7 @@ mod tests {
 
         board.set_cell(3, 3, 5);
 
-        assert_eq!(board.cells[3][3], 5);
+        assert_eq!(board.cells[3][3], Some(5));
     }
 
     #[test]
@@ -394,9 +438,9 @@ mod tests {
 
         board.clear_cell(3, 3);
 
-        assert_eq!(board.cells[3][3], -1);
-        assert_eq!(board.cells[3][8], 3);
-        assert_eq!(board.cells[8][4], 6);
-        assert_eq!(board.cells[5][1], 7);
+        assert_eq!(board.cells[3][3], None);
+        assert_eq!(board.cells[3][8], Some(3));
+        assert_eq!(board.cells[8][4], Some(6));
+        assert_eq!(board.cells[5][1], Some(7));
     }
 }
