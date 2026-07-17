@@ -448,19 +448,45 @@ mod tests {
     fn test_has_no_duplicates_with_no_duplicates() {
         let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(6), Some(7), Some(8), Some(9), Some(1), Some(2)];
 
-        assert_eq!(
-            Board::has_no_duplicates(&data),
-            true
-        );
+        assert!(Board::has_no_duplicates(&data));
     }
 
     #[test]
     fn test_has_no_duplicates_with_duplicates() {
         let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(4), Some(7), Some(8), Some(9), Some(1), Some(2)];
 
-        assert_eq!(
-            Board::has_no_duplicates(&data),
-            false
-        );
+        assert!(!Board::has_no_duplicates(&data));
+    }
+
+    #[test]
+    fn test_is_valid_move_filled() {
+        let mut board = Board::new(9, 3);
+        board.set_cell(5, 0, 7);
+
+        assert!(!board.is_valid_move(5, 0, 2));
+    }
+
+    #[test]
+    fn test_is_valid_move_row_conflict() {
+        let mut board = Board::new(9, 3);
+        board.set_cell(5, 0, 7);
+
+        assert!(!board.is_valid_move(5, 5, 7));
+    }
+
+    #[test]
+    fn test_is_valid_move_column_conflict() {
+        let mut board = Board::new(9, 3);
+        board.set_cell(5, 0, 7);
+
+        assert!(!board.is_valid_move(0, 0, 7));
+    }
+
+    #[test]
+    fn test_is_valid_move_box_conflict() {
+        let mut board = Board::new(9, 3);
+        board.set_cell(1, 1, 5);
+
+        assert!(!board.is_valid_move(0, 0, 5));
     }
 }
