@@ -20,10 +20,8 @@ impl Board {
         let mut seen = HashSet::new();
 
         for cell in candidates {
-            if let Some(d) = cell {
-                if !seen.insert(d) {
-                    return false;
-                }
+            if let Some(d) = cell && !seen.insert(d){
+                return false;
             }
         }
         true
