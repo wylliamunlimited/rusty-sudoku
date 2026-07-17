@@ -15,12 +15,10 @@ fn main() -> io::Result<()> {
         app.tick();
         guard.draw(&app)?;
 
-        if poll(Duration::from_millis(500))? {
-            if let Some(action) = guard.handle_op()? {
-                if !app.handle_action(action) {
-                    break;
-                }
-            }
+        if poll(Duration::from_millis(500))? 
+            && let Some(action) = guard.handle_op()? 
+            && !app.handle_action(action) {
+            break;
         }
     }
 
