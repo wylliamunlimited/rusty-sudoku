@@ -443,4 +443,24 @@ mod tests {
         assert_eq!(board.cells[8][4], Some(6));
         assert_eq!(board.cells[5][1], Some(7));
     }
+
+    #[test]
+    fn test_has_no_duplicates_with_no_duplicates() {
+        let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(6), Some(7), Some(8), Some(9), Some(1), Some(2)];
+
+        assert_eq!(
+            Board::has_no_duplicates(&data),
+            true
+        );
+    }
+
+    #[test]
+    fn test_has_no_duplicates_with_duplicates() {
+        let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(4), Some(7), Some(8), Some(9), Some(1), Some(2)];
+
+        assert_eq!(
+            Board::has_no_duplicates(&data),
+            false
+        );
+    }
 }
