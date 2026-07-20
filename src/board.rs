@@ -119,6 +119,14 @@ impl Board {
         output
     }
 
+    fn seed(&self) {
+
+    }
+
+    fn mask(&self) {
+
+    }
+
     fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
         let mut output = String::new();
 
