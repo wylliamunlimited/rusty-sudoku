@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::fmt;
+use rand;
 
 pub struct Puzzle {
     pub(crate) solution: Vec<Vec<i32>>,
@@ -119,11 +120,17 @@ impl Board {
         output
     }
 
-    fn seed(&self) {
+    pub fn seed(&mut self) {
+
+        let lookup_val: Vec<i32> = (1..=self.size as i32).collect();
+        let row: usize = 0;
+        let col: usize = 0;
+
+        // TODO
 
     }
 
-    fn mask(&self) {
+    pub fn mask(&mut self) {
 
     }
 
