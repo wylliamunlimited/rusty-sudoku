@@ -1,10 +1,16 @@
-use std::fmt;
 use std::collections::HashSet;
+use std::fmt;
+
+pub struct Puzzle {
+    pub(crate) solution: Vec<Vec<i32>>,
+    pub(crate) mask: Vec<Vec<bool>>,
+}
 
 pub struct Board {
     pub(crate) size: usize,
     pub(crate) box_size: usize,
     pub(crate) cells: Vec<Vec<Option<i32>>>,
+    pub(crate) puzzle: Option<Puzzle>,
 }
 
 impl Board {
@@ -13,6 +19,7 @@ impl Board {
             size,
             box_size,
             cells: vec![vec![None; size]; size],
+            puzzle: None,
         }
     }
 
