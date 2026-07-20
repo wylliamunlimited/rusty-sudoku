@@ -248,15 +248,18 @@ impl BorderStyle {
 mod tests {
     use super::*;
 
-    fn sample_board() -> Board {
-        let data: Vec<Vec<Option<i32>>> = vec![vec![Some(1), Some(2), Some(3), None, None, None, None, None, None]; 9];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data,
-        };
+    fn board_with(cells: Vec<Vec<Option<i32>>>) -> Board {
+        Board {
+            cells,
+            ..Board::new(9, 3)
+        }
+    }
 
-        sample
+    fn sample_board() -> Board {
+        board_with(vec![
+            vec![Some(1), Some(2), Some(3), None, None, None, None, None, None];
+            9
+        ])
     }
 
     #[test]
@@ -308,21 +311,107 @@ mod tests {
     #[test]
     fn test_board() {
         let data: Vec<Vec<Option<i32>>> = vec![
-            vec![Some(5), Some(3), Some(4), Some(6), Some(7), Some(8), Some(9), Some(1), Some(2)],
-            vec![Some(6), Some(7), Some(2), Some(1), Some(9), Some(5), Some(3), Some(4), Some(8)],
-            vec![Some(1), Some(9), Some(8), Some(3), Some(4), Some(2), Some(5), Some(6), Some(7)],
-            vec![Some(8), Some(5), Some(9), Some(7), Some(6), Some(1), Some(4), Some(2), Some(3)],
-            vec![Some(4), Some(2), Some(6), Some(8), Some(5), Some(3), Some(7), Some(9), Some(1)],
-            vec![Some(7), Some(1), Some(3), Some(9), Some(2), Some(4), Some(8), Some(5), Some(6)],
-            vec![Some(9), Some(6), Some(1), Some(5), Some(3), Some(7), Some(2), Some(8), Some(4)],
-            vec![Some(2), Some(8), Some(7), Some(4), Some(1), Some(9), Some(6), Some(3), Some(5)],
-            vec![Some(3), Some(4), Some(5), Some(2), Some(8), Some(6), Some(1), Some(7), Some(9)],
+            vec![
+                Some(5),
+                Some(3),
+                Some(4),
+                Some(6),
+                Some(7),
+                Some(8),
+                Some(9),
+                Some(1),
+                Some(2),
+            ],
+            vec![
+                Some(6),
+                Some(7),
+                Some(2),
+                Some(1),
+                Some(9),
+                Some(5),
+                Some(3),
+                Some(4),
+                Some(8),
+            ],
+            vec![
+                Some(1),
+                Some(9),
+                Some(8),
+                Some(3),
+                Some(4),
+                Some(2),
+                Some(5),
+                Some(6),
+                Some(7),
+            ],
+            vec![
+                Some(8),
+                Some(5),
+                Some(9),
+                Some(7),
+                Some(6),
+                Some(1),
+                Some(4),
+                Some(2),
+                Some(3),
+            ],
+            vec![
+                Some(4),
+                Some(2),
+                Some(6),
+                Some(8),
+                Some(5),
+                Some(3),
+                Some(7),
+                Some(9),
+                Some(1),
+            ],
+            vec![
+                Some(7),
+                Some(1),
+                Some(3),
+                Some(9),
+                Some(2),
+                Some(4),
+                Some(8),
+                Some(5),
+                Some(6),
+            ],
+            vec![
+                Some(9),
+                Some(6),
+                Some(1),
+                Some(5),
+                Some(3),
+                Some(7),
+                Some(2),
+                Some(8),
+                Some(4),
+            ],
+            vec![
+                Some(2),
+                Some(8),
+                Some(7),
+                Some(4),
+                Some(1),
+                Some(9),
+                Some(6),
+                Some(3),
+                Some(5),
+            ],
+            vec![
+                Some(3),
+                Some(4),
+                Some(5),
+                Some(2),
+                Some(8),
+                Some(6),
+                Some(1),
+                Some(7),
+                Some(9),
+            ],
         ];
-        let sample: Board = Board {
-            size: 9,
-            box_size: 3,
-            cells: data,
-        };
+        let sample: Board = board_with(data);
 
         let rendered_board: String = sample.to_string();
 
@@ -451,14 +540,34 @@ mod tests {
 
     #[test]
     fn test_has_no_duplicates_with_no_duplicates() {
-        let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(6), Some(7), Some(8), Some(9), Some(1), Some(2)];
+        let data: Vec<Option<i32>> = vec![
+            Some(5),
+            Some(3),
+            Some(4),
+            Some(6),
+            Some(7),
+            Some(8),
+            Some(9),
+            Some(1),
+            Some(2),
+        ];
 
         assert!(Board::has_no_duplicates(&data));
     }
 
     #[test]
     fn test_has_no_duplicates_with_duplicates() {
-        let data: Vec<Option<i32>> = vec![Some(5), Some(3), Some(4), Some(4), Some(7), Some(8), Some(9), Some(1), Some(2)];
+        let data: Vec<Option<i32>> = vec![
+            Some(5),
+            Some(3),
+            Some(4),
+            Some(4),
+            Some(7),
+            Some(8),
+            Some(9),
+            Some(1),
+            Some(2),
+        ];
 
         assert!(!Board::has_no_duplicates(&data));
     }
