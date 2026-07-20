@@ -94,7 +94,8 @@ impl App {
     }
 
     pub fn set_current_cell(&mut self, value: i32) {
-        self.board.set_cell_gated(self.cursor.0, self.cursor.1, value);
+        self.board
+            .set_cell_gated(self.cursor.0, self.cursor.1, value);
     }
 
     pub fn clear_current_cell(&mut self) {

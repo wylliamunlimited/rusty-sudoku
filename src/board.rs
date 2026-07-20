@@ -27,7 +27,9 @@ impl Board {
         let mut seen = HashSet::new();
 
         for cell in candidates {
-            if let Some(d) = cell && !seen.insert(d){
+            if let Some(d) = cell
+                && !seen.insert(d)
+            {
                 return false;
             }
         }
@@ -35,12 +37,11 @@ impl Board {
     }
 
     pub fn is_valid_move(&self, row: usize, col: usize, val: i32) -> bool {
-
         // Row
         let mut trial_list: Vec<Option<i32>> = self.cells[row].clone();
         if trial_list[col].is_some() {
             return false; // A value already exists
-        } 
+        }
         trial_list[col] = Some(val);
         if !Self::has_no_duplicates(&trial_list) {
             return false; // Row conflicts
@@ -50,7 +51,7 @@ impl Board {
         let mut trial_list: Vec<Option<i32>> = self.cells.iter().map(|row| row[col]).collect();
         if trial_list[row].is_some() {
             return false; // A value already exists
-        } 
+        }
         trial_list[row] = Some(val);
         if !Self::has_no_duplicates(&trial_list) {
             return false; // Row conflicts
@@ -75,7 +76,6 @@ impl Board {
         }
 
         true
-
     }
 
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {

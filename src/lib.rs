@@ -1,3 +1,3 @@
-pub mod board;
 pub mod app;
+pub mod board;
 pub mod tui;
