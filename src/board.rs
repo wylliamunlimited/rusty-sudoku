@@ -2,11 +2,6 @@ use std::collections::HashSet;
 use std::fmt;
 use rand;
 
-pub struct Puzzle {
-    pub(crate) solution: Vec<Vec<i32>>,
-    pub(crate) mask: Vec<Vec<bool>>,
-}
-
 pub struct Board {
     pub(crate) size: usize,
     pub(crate) box_size: usize,
