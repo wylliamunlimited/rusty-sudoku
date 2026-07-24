@@ -53,3 +53,22 @@ impl Puzzle {
     }
 
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mask() {
+        let size: usize = 9;
+        let mut rng = rand::rng();
+
+        let mask: Vec<Vec<bool>> = Puzzle::mask(size, &mut rng);
+
+        assert_eq!(mask.len(), size);
+        assert!(mask.iter().all(|row| row.len() == size));
+
+        let revealed = mask.iter().flatten().filter(|&&shown| shown).count();
+        assert_eq!(revealed, size * size / 2);
+    }
+}
