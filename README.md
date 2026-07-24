@@ -33,6 +33,30 @@ cargo test
 - `Display` impl — full-board text output via `to_string()`, `format!("{board}")`, or `print!("{board}")`
 - Unit tests (6 passing) for borders, row formatting, and full-board rendering
 
+### Puzzle (`src/puzzle.rs`)
+
+Generated game state, kept separate from `Board` (the play surface):
+
+- `Puzzle` struct with two parallel grids:
+  - `solution: Vec<Vec<i32>>` — the complete, rule-valid answer key (always fully
+    filled, so plain `i32` rather than `Option<i32>`)
+  - `mask: Vec<Vec<bool>>` — which cells are given/revealed (`true`) vs. hidden
+    (`false`) to the player
+- `mask(size, rng)` — randomly reveals `size * size / 2` cells (shuffle-all-
+  coordinates, take the first N); returns the mask grid. **Done.**
+- `test_mask` — asserts mask shape and exact revealed-cell count (invariants that
+  hold regardless of the random shuffle). **Done.**
+- Design decisions settled: `generate(size, box_size)` is the sole entry point;
+  `seed`/`can_place` are free helpers (no `size`/`box_size` fields on `Puzzle`);
+  `0` is the empty sentinel in the working grid during generation.
+
+**⚠️ TODO — `seed()` not yet implemented.** This is the next piece to build: fill
+a complete solution grid from scratch via backtracking (recursive `fill` +
+`can_place`, trying shuffled candidates and undoing dead ends). `generate` and
+`can_place` are still scaffolding and depend on it. The file does **not compile
+yet** until `seed`/`can_place`/`generate` are finished and the leftover
+`is_valid_move` / `has_no_duplicates` scaffolding is removed.
+
 ### Main loop (`src/main.rs`)
 
 - In-place redraw prototype: clear screen, render board, wait for input
@@ -53,6 +77,7 @@ cargo test
 src/
   main.rs    — entry point, game loop (in progress)
   board.rs   — Board data, rendering, tests
+  puzzle.rs  — Puzzle (solution + mask), generation (mask done; seed TODO)
 ```
 
 ## Architecture
