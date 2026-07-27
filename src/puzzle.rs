@@ -11,21 +11,22 @@ pub struct Puzzle {
 
 impl Puzzle {
 
-    const lookup_range: Vec<i32> = (1..=9).collect();
+    pub fn generate(size: usize, box_size: usize) -> Puzzle {
+        let mut rng = rand::rng();
 
-    pub fn generate(size: usize, box_size: usize) {
+        let solution = Self::seed(size, box_size, &mut rng);
+        let mask = Self::mask(size, &mut rng);
 
-        let grid: Vec<Vec<i32>> = Self::seed();
-        let mask: Vec<Vec<bool>> = Self::mask();
-        
-        Puzzle {
-            solution: grid,
-            mask: mask,
-        }
-
+        Puzzle { solution, mask }
     }
 
-    pub fn mask(size: usize, rng: &mut ThreadRng) -> Vec<Vec<bool> {
+    pub fn seed(size: usize, box_size: usize, rng: &mut ThreadRng) -> Vec<Vec<i32>> {
+        // TODO: fill via backtracking.
+        let _ = (box_size, rng); // silence unused warnings
+        vec![vec![0; size]; size]
+    }
+
+    pub fn mask(size: usize, rng: &mut ThreadRng) -> Vec<Vec<bool>> {
 
         let clues = size * size / 2; // default difficulty for now
 
@@ -104,5 +105,22 @@ mod tests {
 
         let revealed = mask.iter().flatten().filter(|&&shown| shown).count();
         assert_eq!(revealed, size * size / 2);
+    }
+
+    #[test]
+    fn test_validate() {
+        let grid: Vec<Vec<i32>> = vec![
+            vec![5, 5, 4, 6, 7, 8, 9, 1, 2],
+            vec![6, 7, 2, 1, 9, 5, 3, 4, 8],
+            vec![1, 9, 0, 3, 4, 2, 5, 6, 7],
+            vec![8, 5, 9, 7, 6, 1, 4, 0, 3],
+            vec![4, 2, 6, 8, 5, 3, 7, 9, 1],
+            vec![7, 1, 3, 9, 2, 4, 0, 5, 6],
+            vec![9, 6, 1, 5, 3, 7, 2, 8, 4],
+            vec![2, 8, 7, 0, 1, 9, 6, 3, 0],
+            vec![3, 4, 5, 2, 8, 6, 1, 7, 9],
+        ];
+
+        assert!(!Puzzle::validate(&grid, 0, 1, 3));
     }
 }
