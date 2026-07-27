@@ -115,20 +115,6 @@ impl Board {
         output
     }
 
-    pub fn seed(&mut self) {
-
-        let lookup_val: Vec<i32> = (1..=self.size as i32).collect();
-        let row: usize = 0;
-        let col: usize = 0;
-
-        // TODO
-
-    }
-
-    pub fn mask(&mut self) {
-
-    }
-
     fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
         let mut output = String::new();
 
