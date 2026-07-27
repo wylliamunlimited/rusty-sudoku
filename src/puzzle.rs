@@ -52,6 +52,40 @@ impl Puzzle {
         true
     }
 
+    pub fn validate(
+        grid: &[Vec<i32>], row: usize, col: usize, box_size: usize
+    ) -> bool {
+
+        // row check
+        let aggregate: Vec<i32> = grid[row].clone();
+        if !Self::has_no_duplicates(&aggregate) {
+            return false; // Row conflicts
+        }
+
+        // col check
+        let aggregate: Vec<i32> = grid.iter().map(|row| row[col]).collect();
+        if !Self::has_no_duplicates(&aggregate) {
+            return false; // Col conflicts
+        }
+        
+        // Box
+        let mut aggregate: Vec<i32> = Vec::new();
+        let box_row = (row / box_size) * box_size;
+        let box_col = (col / box_size) * box_size;
+
+        for r in box_row..box_row + box_size {
+            for c in box_col..box_col + box_size {
+                aggregate.push(grid[r][c]);
+            }
+        }
+        if !Self::has_no_duplicates(&aggregate) {
+            return false; // Box conflicts
+        }
+
+        true
+
+    }
+
 }
 
 #[cfg(test)]
