@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fmt;
-use rand;
+
+use crate::puzzle::Puzzle;
 
 pub struct Board {
     pub(crate) size: usize,
