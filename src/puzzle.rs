@@ -2,6 +2,8 @@
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 
+use std::collections::HashSet;
+
 pub struct Puzzle {
     pub(crate) solution: Vec<Vec<i32>>,
     pub(crate) mask: Vec<Vec<bool>>,
@@ -17,7 +19,7 @@ impl Puzzle {
         let mask: Vec<Vec<bool>> = Self::mask();
         
         Puzzle {
-            grid: grid,
+            solution: grid,
             mask: mask,
         }
 
@@ -39,13 +41,11 @@ impl Puzzle {
 
     }
 
-    fn has_no_duplicates(candidates: &[Option<i32>]) -> bool {
+    fn has_no_duplicates(candidates: &[i32]) -> bool {
         let mut seen = HashSet::new();
 
-        for cell in candidates {
-            if let Some(d) = cell
-                && !seen.insert(d)
-            {
+        for &cell in candidates {
+            if cell != 0 && !seen.insert(cell) {
                 return false;
             }
         }
