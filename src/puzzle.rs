@@ -21,9 +21,41 @@ impl Puzzle {
     }
 
     pub fn seed(size: usize, box_size: usize, rng: &mut ThreadRng) -> Vec<Vec<i32>> {
-        // TODO: fill via backtracking.
-        let _ = (box_size, rng); // silence unused warnings
-        vec![vec![0; size]; size]
+
+        let candidates: Vec<i32> = (1..=size).map(|n| n as i32).collect();
+        let mut draft: Vec<Vec<i32>> = vec![vec![0; size]; size];
+        let mut c: Vec<i32> = candidates.clone();
+        c.shuffle(rng);
+        let mut stack: Vec<(Vec<i32>, usize)> = vec![(c, 0)];
+        draft[0][0] = stack[0].0[stack[0].1];
+
+        loop {
+            
+            let depth = stack.len() - 1;
+            let (row, col) = (depth / size, depth % size);
+
+            if (stack[depth].1 >= size) {
+                draft[row][col] = 0;
+                stack.pop();
+                if stack.len() == 0 { break; }
+                let last = stack.len() - 1;
+                stack[last].1 += 1;
+                continue;
+            }
+
+            draft[row][col] = stack[depth].0[stack[depth].1];
+
+            if Self::validate(&draft, row, col, box_size) {
+                if stack.len() == size * size { break; }
+                let mut next = candidates.clone();
+                next.shuffle(rng);
+                stack.push((next, 0));
+            } else {
+                stack[depth].1 += 1;
+            }
+
+        }
+        draft
     }
 
     pub fn mask(size: usize, rng: &mut ThreadRng) -> Vec<Vec<bool>> {
