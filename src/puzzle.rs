@@ -34,7 +34,7 @@ impl Puzzle {
             let depth = stack.len() - 1;
             let (row, col) = (depth / size, depth % size);
 
-            if (stack[depth].1 >= size) {
+            if stack[depth].1 >= size {
                 draft[row][col] = 0;
                 stack.pop();
                 if stack.len() == 0 { break; }
@@ -154,5 +154,35 @@ mod tests {
         ];
 
         assert!(!Puzzle::validate(&grid, 0, 1, 3));
+    }
+
+    #[test]
+    fn test_seed() {
+        let size: usize = 9;
+        let box_size: usize = 3;
+        let mut rng = rand::rng();
+
+        let solution = Puzzle::seed(size, box_size, &mut rng);
+
+        let expected: HashSet<i32> = (1..=size as i32).collect();
+
+        for row in &solution {
+            assert_eq!(row.iter().copied().collect::<HashSet<_>>(), expected);
+        }
+
+        for col in 0..size {
+            let col: HashSet<i32> = solution.iter().map(|r| r[col]).collect();
+            assert_eq!(col, expected);
+        }
+
+        let solution = &solution;
+        for br in (0..size).step_by(box_size) {
+            for bc in (0..size).step_by(box_size) {
+                let boxed: HashSet<i32> = (br..br + box_size)
+                    .flat_map(|r| (bc..bc + box_size).map(move |c| solution[r][c]))
+                    .collect();
+                assert_eq!(boxed, expected);
+            }
+        }
     }
 }
