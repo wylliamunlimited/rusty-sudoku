@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 use crate::puzzle::Puzzle;
+use crate::grid::Grid;
 
 pub struct Board {
     pub(crate) size: usize,
@@ -115,74 +116,16 @@ impl Board {
 
         output
     }
+}
 
-    fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
-        let mut output = String::new();
-
-        let roster: &Vec<Option<i32>> = &self.cells[row_id];
-
-        output.push('║');
-
-        for (i, cell) in roster.iter().enumerate() {
-            let cell_str = match cell {
-                None => String::from("   "),
-                Some(n) => format!(" {n} "),
-            };
-
-            if highlight_col == Some(i) {
-                output.push_str("\x1B[7m"); // before
-                output.push_str(&cell_str); // the 3 chars
-                output.push_str("\x1B[0m"); // after
-            } else {
-                output.push_str(&cell_str);
-            }
-
-            if i == self.size - 1 || (i + 1) % self.box_size == 0 {
-                output.push('║');
-            } else {
-                output.push('│');
-            }
+impl Grid for Board {
+    fn size(&self) -> usize { self.size }
+    fn box_size(&self) -> usize { self.box_size }
+    fn cell_str(&self, row: usize, col: usize) -> String {
+        match self.cells[row][col] {
+            None => String::from("   "),
+            Some(n) => format!(" {n} "),
         }
-
-        output.push('\n');
-        output
-    }
-
-    fn border(&self, style: &BorderStyle) -> String {
-        let mut output = String::new();
-
-        output.push(style.left);
-
-        for i in 0..self.size {
-            output.push_str(style.fill);
-
-            if i == self.size - 1 {
-                output.push(style.right);
-            } else if (i + 1) % self.box_size == 0 {
-                output.push(style.box_junction);
-            } else {
-                output.push(style.cell);
-            }
-        }
-
-        output.push('\n');
-        output
-    }
-
-    fn top_border(&self) -> String {
-        self.border(&BorderStyle::TOP)
-    }
-
-    fn bottom_border(&self) -> String {
-        self.border(&BorderStyle::BOTTOM)
-    }
-
-    fn thick_middle_border(&self) -> String {
-        self.border(&BorderStyle::THICK)
-    }
-
-    fn thin_middle_border(&self) -> String {
-        self.border(&BorderStyle::THIN)
     }
 }
 
