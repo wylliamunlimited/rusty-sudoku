@@ -198,4 +198,20 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_generate_solution_valid() {
+        let puzzle: Puzzle = Puzzle::generate(9, 3);
+        let sol = &puzzle.solution;
+
+        assert_eq!(sol.len(), 9);
+        assert!(sol.iter().all(|r| r.len() == 9));
+
+        for r in 0..9 {
+            for c in 0..9 {
+                assert_ne!(sol[r][c], 0, "cell ({r},{c}) left empty");
+                assert!(Puzzle::validate(sol, r, c, 3), "conflict at ({r},{c})");
+            }
+        }
+    }
 }
