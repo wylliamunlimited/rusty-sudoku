@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::fmt;
 
-use crate::puzzle::Puzzle;
 use crate::grid::Grid;
+use crate::puzzle::Puzzle;
 
 pub struct Board {
     pub(crate) size: usize,
@@ -119,8 +119,12 @@ impl Board {
 }
 
 impl Grid for Board {
-    fn size(&self) -> usize { self.size }
-    fn box_size(&self) -> usize { self.box_size }
+    fn size(&self) -> usize {
+        self.size
+    }
+    fn box_size(&self) -> usize {
+        self.box_size
+    }
     fn cell_str(&self, row: usize, col: usize) -> String {
         match self.cells[row][col] {
             None => String::from("   "),
@@ -204,7 +208,17 @@ mod tests {
 
     fn sample_board() -> Board {
         board_with(vec![
-            vec![Some(1), Some(2), Some(3), None, None, None, None, None, None];
+            vec![
+                Some(1),
+                Some(2),
+                Some(3),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None
+            ];
             9
         ])
     }
