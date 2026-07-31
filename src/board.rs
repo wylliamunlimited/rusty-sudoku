@@ -249,18 +249,12 @@ mod tests {
     #[test]
     fn test_from_puzzle_maps_mask() {
         let puzzle = Puzzle {
-            solution: vec![
-                vec![1, 2],
-                vec![3, 4],
-            ],
-            mask: vec![
-                vec![true,  false],
-                vec![false, true],
-            ],
+            solution: vec![vec![1, 2], vec![3, 4]],
+            mask: vec![vec![true, false], vec![false, true]],
         };
-    
+
         let board = Board::from_puzzle(puzzle);
-    
+
         assert_eq!(board.cells[0][0], Some(1));
         assert_eq!(board.cells[0][1], None);
         assert_eq!(board.cells[1][0], None);
