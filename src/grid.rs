@@ -1,7 +1,6 @@
 use crate::board::BorderStyle;
 
 pub trait Grid {
-
     // Common Usage between Board.rs and Puzzle.rs
     // 1. rendering
     // 2. data
