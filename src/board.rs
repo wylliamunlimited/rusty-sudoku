@@ -12,6 +12,29 @@ pub struct Board {
 }
 
 impl Board {
+    pub fn from_puzzle(puzzle: Puzzle) -> Self {
+        let size = puzzle.size();
+        let box_size = (puzzle.size() as f64).sqrt() as usize;
+        let cells: Vec<Vec<Option<i32>>> = puzzle
+            .mask
+            .iter()
+            .zip(&puzzle.solution)
+            .map(|(mask_row, sol_row)| {
+                mask_row
+                    .iter()
+                    .zip(sol_row)
+                    .map(|(&shown, &val)| shown.then_some(val))
+                    .collect()
+            })
+            .collect();
+        Board {
+            size,
+            box_size,
+            cells,
+            puzzle: Some(puzzle),
+        }
+    }
+
     pub fn new(size: usize, box_size: usize) -> Self {
         Board {
             size,
