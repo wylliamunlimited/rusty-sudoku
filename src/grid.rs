@@ -1,17 +1,10 @@
 use crate::board::BorderStyle;
 
 pub trait Grid {
-    // Common Usage between Board.rs and Puzzle.rs
-    // 1. rendering
-    // 2. data
-
-    // --- Required: the per-type pieces (you implement these on Board & Puzzle) ---
+    
     fn size(&self) -> usize;
     fn box_size(&self) -> usize;
     fn cell_str(&self, row: usize, col: usize) -> String;
-
-    // --- Provided (default): shared rendering, relocated from Board ---
-    // These call the required methods above, so they work for any implementor.
 
     fn border(&self, style: &BorderStyle) -> String {
         let mut output = String::new();
