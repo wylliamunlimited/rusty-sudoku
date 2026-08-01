@@ -1,4 +1,5 @@
 use rusty_sudoku::board::Board;
+use rusty_sudoku::puzzle::Puzzle;
 use rusty_sudoku::grid::Grid;
 
 #[cfg(test)]
@@ -385,4 +386,25 @@ mod tests {
 
         assert!(!board.is_valid_move(0, 0, 5));
     }
+
+    #[test]
+    fn test_is_correct_move() {
+        let solution: Vec<Vec<i32>> = vec![
+            vec![3, 2],
+            vec![5, 4],
+        ];
+        let mask: Vec<Vec<bool>> = vec![
+            vec![false, true],
+            vec![true, false],
+        ];
+        let puzzle: Puzzle = Puzzle::new(
+            solution, mask
+        );
+
+        let board: Board = Board::from_puzzle(puzzle);
+
+        assert!(board.is_correct_move(0, 0, 3));
+        assert!(!board.is_correct_move(1, 1, 3));
+    }
+
 }
