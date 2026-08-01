@@ -57,7 +57,7 @@ impl Board {
         true
     }
 
-    pub fn accessible(&self, row: usize, col: usize) -> bool {
+    pub fn is_editable(&self, row: usize, col: usize) -> bool {
         match &self.puzzle {
             None => true,
             Some(n) => !n.mask[row][col],
