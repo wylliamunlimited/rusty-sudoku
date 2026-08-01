@@ -402,4 +402,15 @@ mod tests {
         assert!(!board.is_correct_move(1, 1, 3));
     }
 
+    #[test]
+    fn test_is_editable() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let board: Board = Board::from_puzzle(puzzle);
+
+        assert!(board.is_editable(0, 0));
+        assert!(!board.is_editable(1, 0));
+        assert!(board.is_editable(1, 1));
+        assert!(!board.is_editable(0, 1));
+    }
+
 }
