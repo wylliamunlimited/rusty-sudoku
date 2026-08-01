@@ -129,6 +129,15 @@ impl Board {
         self.cells[row][col] = None;
     }
 
+    pub fn clear_cell_gated(&mut self, row: usize, col: usize) -> bool {
+        if self.is_editable(row, col) {
+            self.clear_cell(row, col);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn render(&self, cursor: (usize, usize), blink: bool) -> String {
         let mut output = String::new();
         output.push_str(&self.top_border());
