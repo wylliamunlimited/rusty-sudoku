@@ -1,6 +1,6 @@
 use crate::board::Board;
-use crate::puzzle::Puzzle;
 use crate::grid::Grid;
+use crate::puzzle::Puzzle;
 
 #[cfg(test)]
 mod tests {
