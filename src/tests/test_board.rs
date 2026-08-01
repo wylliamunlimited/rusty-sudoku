@@ -30,6 +30,12 @@ mod tests {
         ])
     }
 
+    fn create_toy_puzzle(solution: Option<Vec<Vec<i32>>>, mask: Option<Vec<Vec<bool>>>) -> Puzzle {
+        let solution = solution.unwrap_or_else(|| vec![vec![3, 2], vec![5, 4]]);
+        let mask = mask.unwrap_or_else(|| vec![vec![false, true], vec![true, false]]);
+        Puzzle::new(solution, mask)
+    }
+
     #[test]
     fn test_from_puzzle_maps_mask() {
         let puzzle = Puzzle {
@@ -389,18 +395,7 @@ mod tests {
 
     #[test]
     fn test_is_correct_move() {
-        let solution: Vec<Vec<i32>> = vec![
-            vec![3, 2],
-            vec![5, 4],
-        ];
-        let mask: Vec<Vec<bool>> = vec![
-            vec![false, true],
-            vec![true, false],
-        ];
-        let puzzle: Puzzle = Puzzle::new(
-            solution, mask
-        );
-
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
         let board: Board = Board::from_puzzle(puzzle);
 
         assert!(board.is_correct_move(0, 0, 3));
