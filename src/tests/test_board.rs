@@ -1,3 +1,7 @@
+use crate::board::Board;
+use crate::puzzle::Puzzle;
+use crate::grid::Grid;
+
 #[cfg(test)]
 mod tests {
     use super::*;

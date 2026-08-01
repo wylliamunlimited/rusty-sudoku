@@ -2,5 +2,5 @@ pub mod app;
 pub mod board;
 pub mod grid;
 pub mod puzzle;
-pub mod tests;
+#[cfg(test)] mod tests;
 pub mod tui;
