@@ -84,6 +84,6 @@ impl App {
     }
 
     pub fn clear_current_cell(&mut self) {
-        self.board.clear_cell(self.cursor.0, self.cursor.1);
+        self.board.clear_cell_gated(self.cursor.0, self.cursor.1);
     }
 }
