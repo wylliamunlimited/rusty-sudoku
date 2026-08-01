@@ -44,7 +44,7 @@ impl Board {
         }
     }
 
-    fn has_no_duplicates(candidates: &[Option<i32>]) -> bool {
+    pub fn has_no_duplicates(candidates: &[Option<i32>]) -> bool {
         let mut seen = HashSet::new();
 
         for cell in candidates {

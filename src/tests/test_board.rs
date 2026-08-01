@@ -1,6 +1,6 @@
-use rusty_sudoku::board::Board;
-use rusty_sudoku::puzzle::Puzzle;
-use rusty_sudoku::grid::Grid;
+use crate::board::Board;
+use crate::puzzle::Puzzle;
+use crate::grid::Grid;
 
 #[cfg(test)]
 mod tests {

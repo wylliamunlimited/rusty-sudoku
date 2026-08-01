@@ -1,5 +1,5 @@
-use rusty_sudoku::puzzle::Puzzle;
-use rusty_sudoku::grid::Grid;
+use crate::puzzle::Puzzle;
+use crate::grid::Grid;
 
 use std::collections::HashSet;
 
