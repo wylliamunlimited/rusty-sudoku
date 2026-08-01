@@ -99,12 +99,16 @@ impl Board {
         true
     }
 
+    pub fn is_correct_move(&self, row: usize, col: usize, val: i32) -> bool {
+        self.puzzle.as_ref().is_some_and(|p| p.solution[row][col] == val)
+    }
+
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
         self.cells[row][col] = Some(value);
     }
 
     pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> bool {
-        if self.is_valid_move(row, col, value) {
+        if self.is_valid_move(row, col, value) && self.is_correct_move(row, col, value) {
             self.set_cell(row, col, value);
             true
         } else {
