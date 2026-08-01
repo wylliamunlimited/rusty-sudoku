@@ -57,6 +57,13 @@ impl Board {
         true
     }
 
+    pub fn accessible(&self, row: usize, col: usize) -> bool {
+        match &self.puzzle {
+            None => true,
+            Some(n) => !n.mask[row][col],
+        }
+    }
+
     pub fn is_valid_move(&self, row: usize, col: usize, val: i32) -> bool {
         // Row
         let mut trial_list: Vec<Option<i32>> = self.cells[row].clone();
@@ -100,7 +107,9 @@ impl Board {
     }
 
     pub fn is_correct_move(&self, row: usize, col: usize, val: i32) -> bool {
-        self.puzzle.as_ref().is_some_and(|p| p.solution[row][col] == val)
+        self.puzzle
+            .as_ref()
+            .is_some_and(|p| p.solution[row][col] == val)
     }
 
     pub fn set_cell(&mut self, row: usize, col: usize, value: i32) {
