@@ -117,7 +117,10 @@ impl Board {
     }
 
     pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> bool {
-        if self.is_valid_move(row, col, value) && self.is_correct_move(row, col, value) {
+        if self.is_editable(row, col) 
+            && self.is_valid_move(row, col, value) 
+            && self.is_correct_move(row, col, value) 
+        {
             self.set_cell(row, col, value);
             true
         } else {
