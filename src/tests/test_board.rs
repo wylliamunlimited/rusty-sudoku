@@ -1,7 +1,3 @@
-use crate::board::Board;
-use crate::puzzle::Puzzle;
-use crate::grid::Grid;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -412,5 +408,4 @@ mod tests {
         assert!(board.is_editable(1, 1));
         assert!(!board.is_editable(0, 1));
     }
-
 }
