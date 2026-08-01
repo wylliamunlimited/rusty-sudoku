@@ -69,27 +69,12 @@ impl App {
     }
 
     pub fn shift_cursor(&mut self, op: Direction) {
+        let max = self.board.size - 1;
         match op {
-            Direction::Left => {
-                if self.cursor.1 > 0 {
-                    self.cursor.1 -= 1;
-                }
-            }
-            Direction::Right => {
-                if self.cursor.1 < self.board.size - 1 {
-                    self.cursor.1 += 1;
-                }
-            }
-            Direction::Up => {
-                if self.cursor.0 > 0 {
-                    self.cursor.0 -= 1;
-                }
-            }
-            Direction::Down => {
-                if self.cursor.0 < self.board.size - 1 {
-                    self.cursor.0 += 1;
-                }
-            }
+            Direction::Up => self.cursor.0 = self.cursor.0.saturating_sub(1),
+            Direction::Down => self.cursor.0 = (self.cursor.0 + 1).min(max),
+            Direction::Left => self.cursor.1 = self.cursor.1.saturating_sub(1),
+            Direction::Right => self.cursor.1 = (self.cursor.1 + 1).min(max),
         }
     }
 
