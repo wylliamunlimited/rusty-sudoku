@@ -1,8 +1,3 @@
-use crate::puzzle::Puzzle;
-use crate::grid::Grid;
-
-use std::collections::HashSet;
-
 #[cfg(test)]
 mod tests {
     use super::*;
