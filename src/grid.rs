@@ -1,7 +1,6 @@
 use crate::board::BorderStyle;
 
 pub trait Grid {
-    
     fn size(&self) -> usize;
     fn box_size(&self) -> usize;
     fn cell_str(&self, row: usize, col: usize) -> String;

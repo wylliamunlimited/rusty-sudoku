@@ -11,7 +11,11 @@ pub struct Puzzle {
 }
 
 impl Puzzle {
-    pub fn generate(size: usize, box_size: usize) -> Puzzle {
+    pub fn new(solution: Vec<Vec<i32>>, mask: Vec<Vec<bool>>) -> Self {
+        Puzzle { solution, mask }
+    }
+
+    pub fn generate(size: usize, box_size: usize) -> Self {
         let mut rng = rand::rng();
 
         let solution = Self::seed(size, box_size, &mut rng);
