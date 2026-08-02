@@ -141,6 +141,12 @@ impl Board {
         }
     }
 
+    pub fn first_editable(&self) -> Option<(usize, usize)> {
+        (0..self.size)
+            .flat_map(|r| (0..self.size).map(move |c| (r, c)))
+            .find(|&(r, c)| self.is_editable(r, c))
+    }
+
     pub fn render(&self, cursor: (usize, usize), blink: bool) -> String {
         let mut output = String::new();
         output.push_str(&self.top_border());

@@ -29,9 +29,10 @@ impl App {
     const BLINK_INTERVAL: u64 = 500; // 500ms
 
     pub fn new(board: Board) -> Self {
+        let s: (usize, usize) = board.first_editable().unwrap_or((0, 0));
         App {
             board,
-            cursor: (0, 0),
+            cursor: s,
             highlight_on: false,             // Started with no blink
             last_blink_time: Instant::now(), // Ticking since instantiation
         }
