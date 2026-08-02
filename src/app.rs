@@ -9,6 +9,7 @@ pub struct App {
     pub(crate) last_blink_time: Instant,
 }
 
+#[derive(Clone, Copy)]
 pub enum Direction {
     Up,
     Down,
@@ -69,14 +70,20 @@ impl App {
         self.board.render(self.cursor, self.highlight_on)
     }
 
-    pub fn shift_cursor(&mut self, op: Direction) {
+    fn step(&self, (r, c): (usize, usize), op: Direction) -> (usize, usize) {
         let max = self.board.size - 1;
         match op {
-            Direction::Up => self.cursor.0 = self.cursor.0.saturating_sub(1),
-            Direction::Down => self.cursor.0 = (self.cursor.0 + 1).min(max),
-            Direction::Left => self.cursor.1 = self.cursor.1.saturating_sub(1),
-            Direction::Right => self.cursor.1 = (self.cursor.1 + 1).min(max),
+            Direction::Up => (r.saturating_sub(1), c),
+            Direction::Down => ((r + 1).min(max), c),
+            Direction::Left => (r, c.saturating_sub(1)),
+            Direction::Right => (r, (c + 1).min(max)),
         }
+    }
+
+    pub fn shift_cursor(&mut self, op: Direction) {
+        let (r, c): (usize, usize) = self.step(self.cursor, op);
+        self.cursor.0 = r;
+        self.cursor.1 = c;
     }
 
     pub fn set_current_cell(&mut self, value: i32) {
