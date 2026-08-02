@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::board::{Board, OpError};
 
 use std::time::{Duration, Instant};
 
@@ -7,6 +7,7 @@ pub struct App {
     pub(crate) cursor: (usize, usize),
     pub(crate) highlight_on: bool,
     pub(crate) last_blink_time: Instant,
+    pub(crate) last_error: Option<OpError>,
 }
 
 #[derive(Clone, Copy)]
@@ -36,12 +37,14 @@ impl App {
             cursor: s,
             highlight_on: false,             // Started with no blink
             last_blink_time: Instant::now(), // Ticking since instantiation
+            last_error: None,
         }
     }
 
     pub fn handle_action(&mut self, action: Action) -> bool {
         match action {
             Action::Move(d) => {
+                self.last_error = None;
                 self.shift_cursor(d);
                 true
             }
@@ -93,11 +96,14 @@ impl App {
     }
 
     pub fn set_current_cell(&mut self, value: i32) {
-        self.board
-            .set_cell_gated(self.cursor.0, self.cursor.1, value);
+        self.last_error = self.board
+            .set_cell_gated(self.cursor.0, self.cursor.1, value)
+            .err();
     }
 
     pub fn clear_current_cell(&mut self) {
-        self.board.clear_cell_gated(self.cursor.0, self.cursor.1);
+        self.last_error = self.board
+            .clear_cell_gated(self.cursor.0, self.cursor.1)
+            .err();
     }
 }
