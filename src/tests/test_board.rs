@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::board::{Board, OpError};
 use crate::grid::Grid;
 use crate::puzzle::Puzzle;
 
@@ -418,7 +418,7 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
 
-        assert!(board.set_cell_gated(0, 0, 3));
+        assert!(board.set_cell_gated(0, 0, 3).is_ok());
         assert_eq!(board.cells[0][0], Some(3));
     }
 
@@ -427,7 +427,9 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
 
-        assert!(!board.set_cell_gated(0, 0, 4));
+        let result = board.set_cell_gated(0, 0, 4);
+
+        assert!(matches!(result, Err(OpError::Incorrect)));
         assert_eq!(board.cells[0][0], None);
     }
 
@@ -436,7 +438,9 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
 
-        assert!(!board.set_cell_gated(0, 1, 2));
+        let result = board.set_cell_gated(0, 1, 2);
+
+        assert!(matches!(result, Err(OpError::NotEditable)));
         assert_eq!(board.cells[0][1], Some(2));
     }
 
@@ -446,7 +450,7 @@ mod tests {
         let mut board: Board = Board::from_puzzle(puzzle);
         board.set_cell(0, 0, 3);
 
-        assert!(board.clear_cell_gated(0, 0));
+        assert!(board.clear_cell_gated(0, 0).is_ok());
         assert_eq!(board.cells[0][0], None);
     }
 
@@ -455,7 +459,9 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
 
-        assert!(!board.clear_cell_gated(0, 1));
+        let result = board.clear_cell_gated(0, 1);
+
+        assert!(matches!(result, Err(OpError::NotEditable)));
         assert_eq!(board.cells[0][1], Some(2));
     }
 }

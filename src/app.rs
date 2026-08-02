@@ -70,7 +70,11 @@ impl App {
     }
 
     pub fn view(&self) -> String {
-        self.board.render(self.cursor, self.highlight_on)
+        let mut out = self.board.render(self.cursor, self.highlight_on);
+        if let Some(err) = &self.last_error {
+            out.push_str(&format!("\n{err}\n"));
+        }
+        out
     }
 
     fn step(&self, (r, c): (usize, usize), op: Direction) -> (usize, usize) {
