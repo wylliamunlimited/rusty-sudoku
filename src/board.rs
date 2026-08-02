@@ -11,6 +11,13 @@ pub struct Board {
     pub(crate) puzzle: Option<Puzzle>,
 }
 
+pub enum OpError {
+    NotEditable,
+    Occupied,
+    Conflicts,
+    Incorrect,
+}
+
 impl Board {
     pub fn from_puzzle(puzzle: Puzzle) -> Self {
         let size = puzzle.size();
@@ -116,29 +123,30 @@ impl Board {
         self.cells[row][col] = Some(value);
     }
 
-    pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> bool {
-        if self.is_editable(row, col) 
-            && self.is_valid_move(row, col, value) 
-            && self.is_correct_move(row, col, value) 
-        {
-            self.set_cell(row, col, value);
-            true
-        } else {
-            false
+    pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> Result<(), OpError> {
+        if !self.is_editable(row, col) {
+            return Err(OpError::NotEditable);
         }
+        if !self.is_valid_move(row, col, value) {
+            return Err(OpError::Conflicts);
+        }
+        if !self.is_correct_move(row, col, value) {
+            return Err(OpError::Incorrect);
+        }
+        self.set_cell(row, col, value);
+        Ok(())
     }
 
     pub fn clear_cell(&mut self, row: usize, col: usize) {
         self.cells[row][col] = None;
     }
 
-    pub fn clear_cell_gated(&mut self, row: usize, col: usize) -> bool {
-        if self.is_editable(row, col) {
-            self.clear_cell(row, col);
-            true
-        } else {
-            false
+    pub fn clear_cell_gated(&mut self, row: usize, col: usize) -> Result<(), OpError> {
+        if !self.is_editable(row, col) {
+            return Err(OpError::NotEditable);
         }
+        self.clear_cell(row, col);
+        Ok(())
     }
 
     pub fn first_editable(&self) -> Option<(usize, usize)> {
