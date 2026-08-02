@@ -22,151 +22,186 @@ cargo test
 
 ## What's built so far
 
-### Board (`src/board.rs`)
+The game is playable end to end: it generates a random 9×9 puzzle, opens on the
+alternate screen in raw mode, and lets you navigate with arrow keys, type digits,
+and clear cells — with every move checked against the rules. **42 tests passing.**
 
-- `Board` struct with configurable `size`, `box_size`, and `cells`
-- Empty cells represented as `-1` (rendered as blank space)
-- `Board::new(size, box_size)` — creates an empty board
-- `set_cell` / `clear_cell` — mutate individual cells
-- Box-drawing rendering with thick 3×3 separators and thin inner lines
-- `BorderStyle` — shared border template for top, bottom, thick middle, and thin middle lines
-- `Display` impl — full-board text output via `to_string()`, `format!("{board}")`, or `print!("{board}")`
-- Unit tests (6 passing) for borders, row formatting, and full-board rendering
+### Grid (`src/grid.rs`)
+
+Shared rendering trait implemented by both `Board` and `Puzzle`:
+
+- `size()`, `box_size()`, `cell_str(row, col)` — the three per-type hooks
+- Default methods for all border variants and row formatting, so rendering logic
+  lives in exactly one place
+- `BorderStyle` — shared border template for top, bottom, thick middle, and thin
+  middle lines
 
 ### Puzzle (`src/puzzle.rs`)
 
 Generated game state, kept separate from `Board` (the play surface):
 
-- `Puzzle` struct with two parallel grids:
-  - `solution: Vec<Vec<i32>>` — the complete, rule-valid answer key (always fully
-    filled, so plain `i32` rather than `Option<i32>`)
-  - `mask: Vec<Vec<bool>>` — which cells are given/revealed (`true`) vs. hidden
-    (`false`) to the player
-- `mask(size, rng)` — randomly reveals `size * size / 2` cells (shuffle-all-
-  coordinates, take the first N); returns the mask grid. **Done.**
-- `test_mask` — asserts mask shape and exact revealed-cell count (invariants that
-  hold regardless of the random shuffle). **Done.**
-- Design decisions settled: `generate(size, box_size)` is the sole entry point;
-  `seed`/`can_place` are free helpers (no `size`/`box_size` fields on `Puzzle`);
-  `0` is the empty sentinel in the working grid during generation.
+- `solution: Vec<Vec<i32>>` — the complete, rule-valid answer key (always fully
+  filled, so plain `i32` rather than `Option<i32>`)
+- `mask: Vec<Vec<bool>>` — which cells are given/revealed (`true`) vs. hidden
+  (`false`) from the player
+- `generate(size, box_size)` — random puzzle; the sole entry point for play
+- `new(solution, mask)` — deterministic construction, used by tests
+- `seed(size, box_size, rng)` — fills a complete solution via **iterative**
+  backtracking over an explicit stack (no recursion), trying shuffled candidates
+  per cell and unwinding dead ends
+- `mask(size, rng)` — randomly reveals `size * size / 2` cells (shuffle all
+  coordinates, take the first N)
+- `validate(grid, row, col, box_size)` — row/column/box conflict check used
+  during generation
 
-**⚠️ TODO — `seed()` not yet implemented.** This is the next piece to build: fill
-a complete solution grid from scratch via backtracking (recursive `fill` +
-`can_place`, trying shuffled candidates and undoing dead ends). `generate` and
-`can_place` are still scaffolding and depend on it. The file does **not compile
-yet** until `seed`/`can_place`/`generate` are finished and the leftover
-`is_valid_move` / `has_no_duplicates` scaffolding is removed.
+### Board (`src/board.rs`)
 
-### Main loop (`src/main.rs`)
+The play surface. Holds the player's grid plus the `Puzzle` it came from, so it
+can answer both "is this legal?" and "is this right?".
 
-- In-place redraw prototype: clear screen, render board, wait for input
-- Starts with an empty 9×9 board
-- Temporary line-based input (`read_line`, requires Enter):
-  - `q` — quit
-  - `5` — set cell (0, 0) to 5
-  - `c` — clear cell (0, 0)
-- Hardcoded cell coordinates; no cursor yet
+- `cells: Vec<Vec<Option<i32>>>` — `None` is empty (no sentinel value)
+- `from_puzzle(puzzle)` — seeds revealed clues from the mask; hidden cells start
+  empty. `new(size, box_size)` still makes a bare puzzle-less board
+- Rule predicates:
+  - `is_editable` — is this a player cell, or a given clue?
+  - `is_valid_move` — no duplicate in row, column, or box (and the cell is empty)
+  - `is_correct_move` — does this match the solution?
+- `set_cell_gated` / `clear_cell_gated` — the gated mutators, returning
+  `Result<(), OpError>`. All rule enforcement lives here, so illegal state is
+  unreachable for any caller
+- `OpError` — why a move was refused (`NotEditable`, `Conflicts`, `Incorrect`,
+  `Occupied`), with a `Display` impl providing player-facing text
+- `first_editable()` — first non-clue cell, for initial cursor placement
+- `render(cursor, blink)` — full board with the cursor cell highlighted
+
+### App (`src/app.rs`)
+
+Interaction state, no rendering logic of its own:
+
+- `cursor`, `highlight_on` + `last_blink_time` (blink phase), `last_error`
+- `Action` / `Direction` enums — input is translated to intent before it reaches
+  the game logic
+- `shift_cursor` — clamps at the board edges **and skips over given clues**, so
+  the cursor only ever rests where the player can type. Gives up rather than
+  looping when only clues remain in that direction
+- `step` — pure position-in/position-out helper the cursor logic is built on
+- `set_current_cell` / `clear_current_cell` — store the rejection reason in
+  `last_error`, cleared on the next successful action or cursor move
+- `view()` — board render plus the current error message, if any
+
+### Terminal (`src/tui.rs`)
+
+- `TerminalGuard` — enters the alternate screen and raw mode on construction,
+  restores both in `Drop` so every exit path cleans up
+- `key_to_action` — arrow keys, `1`–`9`, Backspace, `q`
+- `draw` — clear, render, flush
 
 ### Dependencies
 
-- `ratatui` — added for the upcoming TUI/event-loop phase (not wired up yet)
+- `crossterm` — raw mode, alternate screen, key events
+- `rand` — puzzle generation
+- `ratatui` — declared but **not yet used** (reserved for the widget phase)
 
 ## Project structure
 
 ```text
 src/
-  main.rs    — entry point, game loop (in progress)
-  board.rs   — Board data, rendering, tests
-  puzzle.rs  — Puzzle (solution + mask), generation (mask done; seed TODO)
+  main.rs    — entry point, event loop
+  app.rs     — App state, cursor movement, input intent
+  board.rs   — play surface, rule enforcement, OpError
+  puzzle.rs  — solution generation + clue mask
+  grid.rs    — shared rendering trait
+  tui.rs     — terminal setup/teardown, key translation
+  tests/     — unit tests (test_app, test_board, test_puzzle)
 ```
 
 ## Architecture
 
-Two layers of state (cursor/App layer coming next):
-
 | Layer | Responsibility |
 |---|---|
-| `Board` | Puzzle data — cells, size, rendering, mutation |
-| `App` (planned) | Interaction — cursor position, input handling, running flag |
+| `Puzzle` | Generated truth — solution grid and which cells are revealed |
+| `Board` | Play surface — cells, rendering, and **all rule enforcement** |
+| `App` | Interaction — cursor, blink phase, last error, input intent |
+| `TerminalGuard` | Terminal mode and raw key events |
 
-`Board` owns the grid and how it looks. `App` will own how the user interacts
-with it. Rendering stays on `Board`; input and cursor logic stay out of it.
+`Board` owns the grid, how it looks, and what moves are legal. `App` owns how the
+user interacts with it. Rules never live in the input handler: `App` asks `Board`
+and reports the answer, so any future caller gets the same enforcement.
 
 ## Phased build order
 
-### Phase 1 — App + cursor (stdlib, no new libraries)
+### Phase 1 — App + cursor ✅
 
-- [ ] Add `App` struct wrapping `Board` with `cursor_row`, `cursor_col`, `running`
-- [ ] Replace hardcoded `(0, 0)` with cursor position for `set_cell` / `clear_cell`
-- [ ] Add arrow-key navigation (Up/Down/Left/Right) via crossterm
-- [ ] Accept any digit 1–9 at cursor, not just a single test value
+- [x] `App` struct wrapping `Board` with cursor state
+- [x] Replace hardcoded `(0, 0)` with cursor position for set/clear
+- [x] Arrow-key navigation (Up/Down/Left/Right) via crossterm
+- [x] Accept any digit 1–9 at cursor
 
-### Phase 2 — Raw input (crossterm, via ratatui dependency)
+### Phase 2 — Raw input ✅
 
-- [ ] Replace `read_line` with crossterm event polling
-- [ ] Arrow keys and digit keys work without pressing Enter
-- [ ] Enable raw mode on startup, restore terminal on exit
+- [x] Replace `read_line` with crossterm event polling
+- [x] Arrow keys and digit keys work without pressing Enter
+- [x] Enable raw mode on startup, restore terminal on exit
 
-### Phase 3 — Cursor visual
+### Phase 3 — Cursor visual ✅
 
-- [x] Show which cell is selected in the render output (reverse-video highlight on the cursor cell)
+- [x] Show which cell is selected in the render output
 - [x] Full redraw each iteration (board + cursor overlay)
-- [ ] **Blinking cursor** — make the highlight pulse on its own, on a clock
-  - Drive the blink from wall-clock time, not loop iterations, so the rate
-    stays steady regardless of how fast keys are pressed
-  - Keep two independent pieces of state: cursor *position* (moves on arrow
-    keys) and blink *phase* (toggles on a ~500ms timer)
-  - Each frame renders highlight-on or highlight-off depending on the phase;
-    reuse the existing highlighted vs. plain render paths
-  - Poll on a shorter interval than the blink period for smoother timing
-- [ ] **No scrollback / locked view** — switch to the terminal's alternate
-  screen so redraws don't stack up in scrollback
-  - Enter alternate screen + raw mode on startup; hide the hardware cursor
-  - Restore everything on exit (show cursor, disable raw mode, leave alt
-    screen) on *every* exit path, not just the happy one
+- [x] **Blinking cursor** — driven by wall-clock time (`Instant`, ~500ms), with
+  cursor *position* and blink *phase* kept as independent state
+- [x] **No scrollback / locked view** — alternate screen + raw mode, restored in
+  `Drop` so every exit path cleans up
 
-### Phase 4 — Ratatui widgets (optional polish)
+### Phase 4 — Puzzle generation ✅
 
-- [ ] Swap string rendering for Ratatui layout/widgets
+- [x] `Puzzle` struct — solution grid + reveal mask
+- [x] `seed()` — complete solution via iterative backtracking
+- [x] `mask()` — random clue selection at a fixed clue count
+- [x] `Board::from_puzzle` — mount generated clues at startup
+- [ ] Uniqueness check — the mask currently removes cells at random, so a
+  generated puzzle is **not guaranteed to have exactly one solution**
+- [ ] Difficulty levels (clue count is hardcoded at `size * size / 2`)
+
+### Phase 5 — Game rules ✅
+
+- [x] Move validation (row, column, box constraints)
+- [x] Clue locking — givens can't be overwritten or erased, enforced inside
+  `Board` rather than in the input handler
+- [x] Answer checking — `is_correct_move` against the solution
+- [x] `Result<(), OpError>` on the gated mutators, so callers get a *reason*, not
+  just a refusal, and can't silently ignore the outcome
+- [x] Cursor skips locked cells during navigation
+- [ ] Split `OpError::Occupied` out of `Conflicts` — `is_valid_move` currently
+  collapses "cell is full" and "duplicate in row/col/box" into one `false`
+- [ ] Variable board sizes (`Board` is size-generic; `main` hardcodes 9×9)
+
+### Phase 6 — Game state (next pickup)
+
+The rules layer is complete; nothing yet tracks the *game*. This is the gap:
+
+- [ ] Solved detection — with the correctness gate in place the board can only
+  hold correct values, so "solved" reduces to "no cell is `None`"
+- [ ] Win state and end-of-game handling (currently `q` is the only exit)
+- [ ] Optional: mistake counter / strike limit. Note this conflicts with the
+  current design, where wrong digits are refused outright rather than recorded —
+  allowing mistakes to land would mean dropping `is_correct_move` from the gate
+- [ ] Timer / move count
+
+### Phase 7 — Ratatui widgets (optional polish)
+
+- [ ] Swap string rendering for Ratatui layout/widgets (dependency is declared
+  but unused)
 - [ ] Styling, status line, cleaner cursor highlight
-
-### Phase 4 — Seed cells + locking (next pickup)
-
-Goal: mount given numbers on the board at startup and prevent the user from
-editing them. Design decision already made — use a **parallel mask** on
-`Board`, not an enum cell type.
-
-- [ ] Add an `editable: Vec<Vec<bool>>` field to `Board`, same shape as `cells`
-  - Polarity: `editable[r][c] == true` → user may change it; seed cells `false`
-  - `Board::new` initializes all cells `true` (empty board, nothing locked)
-  - Fix the test struct literals (`sample_board`, `test_board`) — adding a
-    field breaks every `Board { .. }` literal until they include `editable`
-- [ ] Enforce locking **inside `Board`**, not in the input handler
-  - `set_cell` / `clear_cell` consult `editable` and refuse on locked cells
-    (return `bool` for now: applied vs. rejected — upgrade to `Result` later)
-  - Rationale: "a fixed clue can't change" is a board invariant; guarding the
-    mutators makes the illegal state unreachable for any caller
-  - `clear_cell` respects the lock too — Backspace must not erase a given
-- [ ] Add `set_given(row, col, value)` — writes the value *and* locks the cell
-  in one call, so the two parallel arrays can never drift out of sync
-- [ ] Seed generation — fill some `Given` cells at startup via `set_given`
-  (see [Sudoku solution generation (proposal)](#sudoku-solution-generation-proposal))
-- [ ] Rendering unchanged for now (locked cells look the same; dim/bold the
-  givens is later polish)
-
-### Phase 5 — Game rules (later)
-
-- [ ] Move validation (row, column, box constraints)
-- [ ] Self-correcting / undo on invalid input
-- [ ] Variable board sizes (4×4, 16×16, 25×25, etc.)
-- [ ] Puzzle generation and difficulty levels
-  (see [Sudoku solution generation (proposal)](#sudoku-solution-generation-proposal))
+- [ ] Visually distinguish given clues from player entries (dim/bold)
 
 ## Sudoku solution generation (proposal)
 
 Design note for how to produce valid complete grids and derive playable puzzles.
-Not implemented yet — this section records the intended approach before writing
-code.
+**Partially implemented** — solution generation is done (`Puzzle::seed`, via
+iterative backtracking rather than the recursive form sketched below). Clue
+selection is done but *naive*: `Puzzle::mask` removes cells at random with no
+uniqueness check, so a generated puzzle may admit more than one solution. The
+uniqueness and difficulty sections below remain unbuilt.
 
 ### Two separate problems
 
@@ -180,11 +215,12 @@ but not sufficient for a good game. Random digits in random cells almost never
 works. The reliable pipeline is:
 
 ```text
-generate full solution  →  remove clues + verify uniqueness  →  set_given() for survivors
+generate full solution  →  remove clues + verify uniqueness  →  mask survivors
 ```
 
-Phase 4 (`set_given`, `editable` mask) handles the last step. Phase 5 adds move
-validation. This proposal covers the first two steps.
+The first and last steps are built (`Puzzle::seed`, `Puzzle::mask`, and
+`Board::from_puzzle` mounting the survivors). The middle step — verifying that
+the remaining clues admit exactly one solution — is the missing piece.
 
 ### Recommended approach: diagonal boxes + backtracking
 
@@ -239,7 +275,7 @@ A full solution is not a puzzle. To produce startup givens:
    solution?** If yes, keep the removal; if ambiguous or unsolvable, put the
    clue back.
 4. Stop at a target clue count or difficulty threshold.
-5. Call `set_given(row, col, value)` for every surviving clue.
+5. Mark every surviving clue in the mask.
 
 **Uniqueness check** requires a solver that can count solutions (stop at 2).
 Reuse the same backtracking engine from solution generation, but run it on the
@@ -253,54 +289,54 @@ is out of scope for the first generator; start with a fixed clue count (e.g.
 ### Validation dependency
 
 Solution generation and puzzle seeding both need **conflict detection**: can
-digit `d` go at `(row, col)` given current cell values? This is the same check
-Phase 5 will use for player moves. Build it once on `Board`:
+digit `d` go at `(row, col)` given current cell values?
 
-```text
-is_valid_placement(row, col, digit) -> bool
-```
+This ended up as two functions rather than one, because the two layers hold
+different data: `Puzzle::validate` works on a dense `Vec<Vec<i32>>` with `0` as
+the generation-time empty sentinel, while `Board::is_valid_move` works on
+`Vec<Vec<Option<i32>>>` and additionally rejects already-occupied cells. Same
+rule, different representations — worth revisiting if they ever drift.
 
-Generation, seeding, and live input validation should all call the same function
-so the rules never drift apart.
+### Module layout
 
-### Proposed module layout
-
-Keep generation out of the TUI loop and out of rendering:
-
-```text
-src/
-  board.rs       — grid, rendering, is_valid_placement, set_given
-  generator.rs   — generate_solution(), seed_puzzle(solution, clue_count)
-  main.rs        — App loop; calls generator at startup (or loads a preset)
-```
-
-`Board::seed()` (if kept) should delegate to `generator` rather than embed
-search logic on the struct.
+Generation lives outside the TUI loop and outside rendering, as intended, though
+it sits on `Puzzle` rather than a separate `generator` module — the struct is
+small enough that a third module wasn't earning its keep.
 
 ### Phased implementation order
 
-| Step | Delivers | Depends on |
+| Step | Delivers | Status |
 |---|---|---|
-| 1. `is_valid_placement` | Shared rule check | Phase 5 validation |
-| 2. `generate_solution` | Full legal grid | Step 1 |
-| 3. `count_solutions` / uniqueness | Puzzle safety check | Step 2 |
-| 4. `seed_puzzle` | Partial grid + clue count | Steps 2–3, Phase 4 `set_given` |
-| 5. Transforms + difficulty | Variety and grading | Steps 2–4 |
+| 1. Conflict check | Shared rule check | ✅ `Puzzle::validate` / `Board::is_valid_move` |
+| 2. Solution generation | Full legal grid | ✅ `Puzzle::seed` (iterative backtracking) |
+| 3. `count_solutions` / uniqueness | Puzzle safety check | ❌ not started |
+| 4. Clue selection | Partial grid + clue count | ⚠️ `Puzzle::mask`, random, no uniqueness guarantee |
+| 5. Transforms + difficulty | Variety and grading | ❌ not started |
 
-**MVP shortcut:** ship a few hand-authored puzzles (hardcoded givens) while
-Steps 1–4 are in progress. Swap in runtime generation once uniqueness checks
-pass tests.
+Step 3 is the meaningful gap: until a solution counter exists, Step 4 can produce
+puzzles with multiple valid answers. In practice the game hides this, because
+moves are checked against the stored solution rather than solved independently —
+a player deducing a *different* legal answer would be told they're wrong.
 
 ### Testing strategy
 
-- **`is_valid_placement`:** known valid/invalid placements on a partially filled
-  board.
-- **`generate_solution`:** output passes full-grid validation (every row, col,
-  box is a permutation of 1–9); run N times and assert not all identical.
-- **`seed_puzzle`:** seeded partial grid has exactly one solution; all givens
-  match the source solution.
-- **Regression:** solver completes a known published puzzle to the expected
+- [x] **Conflict detection:** known valid/invalid placements on a partially
+  filled board (`test_validate`, `test_is_valid_move_*`).
+- [x] **Solution generation:** output passes full-grid validation — every row,
+  column, and box is a permutation of 1–9 (`test_seed`,
+  `test_generate_solution_valid`).
+- [x] **Clue mask:** correct shape and exact revealed-cell count, invariants that
+  hold regardless of the random shuffle (`test_mask`).
+- [ ] **Uniqueness:** seeded partial grid has exactly one solution — blocked on a
+  solution counter.
+- [ ] **Regression:** solver completes a known published puzzle to the expected
   answer.
+
+Deterministic tests use `Puzzle::new(solution, mask)` to build a fixed puzzle
+rather than going through `generate`, so assertions don't depend on the RNG.
+`seed` and `mask` still take a `ThreadRng` directly, which can't be seeded — if
+generation itself ever needs reproducible tests, those signatures would need to
+take a generic `impl Rng`.
 
 ### Non-goals (for now)
 
@@ -318,18 +354,19 @@ pass tests.
 | Clear | Backspace, Delete, or `0` |
 | Quit | `q` or Esc |
 
-## Done criteria (interactive board MVP)
+## Done criteria (interactive board MVP) ✅
 
 - [x] Board renders with box-drawing characters
 - [x] Board can be created empty and mutated in memory
 - [x] In-place redraw loop (clear screen + re-render)
-- [ ] Visible cursor navigation
-- [ ] Set/clear at cursor position
-- [ ] Raw key input (no Enter required)
-- [ ] Clean terminal restore on exit
+- [x] Visible cursor navigation
+- [x] Set/clear at cursor position
+- [x] Raw key input (no Enter required)
+- [x] Clean terminal restore on exit
 
-## Vision (not yet implemented)
+## Vision
 
-- Play entirely in the terminal through a TUI
-- Every move checked against Sudoku rules before it sticks
-- Invalid moves reported and undone so the board stays legal
+- [x] Play entirely in the terminal through a TUI
+- [x] Every move checked against Sudoku rules before it sticks
+- [x] Invalid moves reported and refused so the board stays legal
+- [ ] Recognize a completed puzzle and end the game
