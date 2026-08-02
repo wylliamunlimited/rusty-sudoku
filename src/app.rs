@@ -81,9 +81,15 @@ impl App {
     }
 
     pub fn shift_cursor(&mut self, op: Direction) {
-        let (r, c): (usize, usize) = self.step(self.cursor, op);
-        self.cursor.0 = r;
-        self.cursor.1 = c;
+        let mut candidate = self.step(self.cursor, op);
+        while !self.board.is_editable(candidate.0, candidate.1) {
+            let next = self.step(candidate, op);
+            if next == candidate {
+                return;
+            }
+            candidate = next;
+        }
+        self.cursor = candidate;
     }
 
     pub fn set_current_cell(&mut self, value: i32) {
