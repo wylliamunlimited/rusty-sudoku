@@ -412,4 +412,50 @@ mod tests {
         assert!(board.is_editable(1, 1));
         assert!(!board.is_editable(0, 1));
     }
+
+    #[test]
+    fn test_set_cell_gated_accepts_correct_value_on_editable_cell() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+
+        assert!(board.set_cell_gated(0, 0, 3));
+        assert_eq!(board.cells[0][0], Some(3));
+    }
+
+    #[test]
+    fn test_set_cell_gated_rejects_incorrect_value_on_editable_cell() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+
+        assert!(!board.set_cell_gated(0, 0, 4));
+        assert_eq!(board.cells[0][0], None);
+    }
+
+    #[test]
+    fn test_set_cell_gated_rejects_write_to_clue() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+
+        assert!(!board.set_cell_gated(0, 1, 2));
+        assert_eq!(board.cells[0][1], Some(2));
+    }
+
+    #[test]
+    fn test_clear_cell_gated_clears_editable_cell() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+        board.set_cell(0, 0, 3);
+
+        assert!(board.clear_cell_gated(0, 0));
+        assert_eq!(board.cells[0][0], None);
+    }
+
+    #[test]
+    fn test_clear_cell_gated_rejects_clearing_clue() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+
+        assert!(!board.clear_cell_gated(0, 1));
+        assert_eq!(board.cells[0][1], Some(2));
+    }
 }
