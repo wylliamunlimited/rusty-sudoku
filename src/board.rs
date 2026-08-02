@@ -215,6 +215,18 @@ impl fmt::Display for Board {
     }
 }
 
+impl fmt::Display for OpError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let message = match self {
+            OpError::NotEditable => "That cell is part of the puzzle and can't be changed.",
+            OpError::Occupied => "That cell already has a number in it.",
+            OpError::Conflicts => "That number already appears in this row, column, or box.",
+            OpError::Incorrect => "That's not the right number for this cell.",
+        };
+        write!(f, "{message}")
+    }
+}
+
 pub struct BorderStyle {
     pub(crate) left: char,
     pub(crate) fill: &'static str,
