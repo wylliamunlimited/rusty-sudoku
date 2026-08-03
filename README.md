@@ -4,6 +4,8 @@ A terminal-based Sudoku game written in Rust. The goal is a locked terminal
 view where you navigate an N×N grid, fill and clear cells, and eventually
 play with full rule validation — all without leaving the terminal.
 
+![Sample Board TUI](/snapshot.png)
+
 ## Getting started
 
 You'll need a recent Rust toolchain (this project uses edition 2024). Install
