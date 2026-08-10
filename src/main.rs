@@ -1,4 +1,4 @@
-use rusty_sudoku::app::App;
+use rusty_sudoku::app::{App, Request};
 use rusty_sudoku::board::Board;
 use rusty_sudoku::puzzle::Puzzle;
 
@@ -8,9 +8,11 @@ use rusty_sudoku::tui::TerminalGuard;
 use std::io;
 use std::time::Duration;
 
+const BOARD_SIZE: usize = 9;
+const BOX_SIZE: usize = 3;
+
 fn main() -> io::Result<()> {
-    let puzzle: Puzzle = Puzzle::generate(9, 3);
-    let mut app: App = App::new(Board::from_puzzle(puzzle));
+    let mut app: App = App::new();
     let guard: TerminalGuard = TerminalGuard::new()?;
 
     loop {
@@ -19,9 +21,17 @@ fn main() -> io::Result<()> {
 
         if poll(Duration::from_millis(500))?
             && let Some(input) = guard.read_input()?
-            && !app.handle_input(input)
         {
-            break;
+            match app.handle_input(input) {
+                Request::Continue => {}
+                // Generation needs the RNG, which is an effect - so it happens
+                // out here at the edge and the finished board goes back in.
+                Request::NewGame => {
+                    let puzzle: Puzzle = Puzzle::generate(BOARD_SIZE, BOX_SIZE);
+                    app.start_game(Board::from_puzzle(puzzle));
+                }
+                Request::Exit => break,
+            }
         }
     }
 
