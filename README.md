@@ -207,6 +207,15 @@ mid-game. A menu forces a split between the app and the game it's running.
 - [ ] Menu rendering through `view()`, reusing the existing blink `tick()` for
   the selection highlight
 
+**Stage 2 — persistence (later)**
+
+- [ ] `Continue` restores a game across program runs, behind the same menu entry
+- [ ] `serde` plus `Serialize`/`Deserialize` on `Puzzle` and `Board`
+- [ ] Save file location, read and write at the `main` edge
+- [ ] Only durable state is saved (`Puzzle`, `cells`, `cursor`). `highlight_on`,
+  `last_blink_time`, and `last_error` are transient and rebuilt on load —
+  `Instant` is an opaque monotonic reading with no meaning across processes
+
 ### Phase 7 — Game state
 
 The rules layer is complete; nothing yet tracks the *game*. This is the gap:
