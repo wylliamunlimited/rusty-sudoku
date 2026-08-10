@@ -1,11 +1,11 @@
 use crate::board::Board;
 use crate::game::{Direction, Game};
+use crate::particles::Cloud;
 
-/// A keypress, stripped of any meaning that depends on what's on screen.
-///
-/// `tui` maps physical keys to these and stops there; deciding what `Up` *does*
-/// is `App`'s job, because that answer changes per screen and belongs somewhere
-/// testable.
+use std::time::{Duration, Instant};
+
+/// A keypress with no screen-specific meaning attached. `tui` produces these;
+/// `App` decides what each one does on the current screen.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Input {
     Up,
@@ -31,11 +31,8 @@ pub enum MenuItem {
     Quit,
 }
 
-/// What `App` needs `main` to do once an input has been handled.
-///
-/// A plain `bool` can't carry this any more: "back to the menu" and "exit the
-/// program" are both non-quit outcomes, and `NewGame` is a request for an
-/// *effect* (RNG) that `App` deliberately can't perform itself.
+/// What `App` needs `main` to do next. `NewGame` is a request for an effect
+/// (the RNG) that `App` deliberately can't perform itself.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Request {
     Continue,
@@ -44,12 +41,12 @@ pub enum Request {
 }
 
 pub struct App {
-    // Private, and only ever changed through the transition methods below. The
-    // pair (Screen::Game, game: None) is representable but invalid, so it gets
-    // gated in one place - the same move as Board::set_cell_gated.
     screen: Screen,
     game: Option<Game>,
     selected: MenuItem,
+    logo: Cloud,
+    frame: u64,
+    last_frame_time: Instant,
 }
 
 impl MenuItem {
@@ -67,16 +64,19 @@ impl MenuItem {
 impl App {
     /// Matches the board's rendered width, so the menu and the grid line up.
     const WIDTH: usize = 37;
+    const LOGO_HEIGHT: usize = 8;
+    const FRAME_INTERVAL: u64 = 80; // ms
 
     pub fn new() -> Self {
         App {
             screen: Screen::Menu,
             game: None,
             selected: MenuItem::NewGame,
+            logo: Cloud::cube(14),
+            frame: 0,
+            last_frame_time: Instant::now(),
         }
     }
-
-    // --- Read-only views of the gated state ---
 
     pub fn screen(&self) -> Screen {
         self.screen
@@ -94,7 +94,9 @@ impl App {
         self.game.is_some()
     }
 
-    // --- Transitions: the only things allowed to touch screen/game ---
+    // Transitions: the only things allowed to touch screen/game. The pair
+    // (Screen::Game, game: None) is representable but invalid, so it's gated
+    // here the way Board::set_cell_gated gates the rules.
 
     pub fn start_game(&mut self, board: Board) {
         self.game = Some(Game::new(board));
@@ -110,8 +112,6 @@ impl App {
     pub fn open_menu(&mut self) {
         self.screen = Screen::Menu;
     }
-
-    // --- Input ---
 
     pub fn handle_input(&mut self, input: Input) -> Request {
         match self.screen {
@@ -131,8 +131,6 @@ impl App {
                 Request::Continue
             }
             Input::Confirm => match self.selected {
-                // App can't generate a puzzle without reaching for the RNG, so
-                // it asks main to do it and hand the board back instead.
                 MenuItem::NewGame => Request::NewGame,
                 MenuItem::Continue => {
                     self.resume();
@@ -146,15 +144,14 @@ impl App {
     }
 
     fn handle_game_input(&mut self, input: Input) -> Request {
-        // Handled before the borrow below, because open_menu needs &mut self
-        // and self.game.as_mut() would still be holding a piece of it.
+        // Before the borrow below: open_menu needs &mut self, which
+        // self.game.as_mut() would still be holding a piece of.
         if input == Input::Back {
             self.open_menu();
             return Request::Continue;
         }
 
         let Some(game) = self.game.as_mut() else {
-            // Unreachable via the transition methods; recover instead of panic.
             self.screen = Screen::Menu;
             return Request::Continue;
         };
@@ -172,7 +169,6 @@ impl App {
         Request::Continue
     }
 
-    /// Whether an item can be landed on. `Continue` is dead until a game exists.
     fn is_selectable(&self, item: MenuItem) -> bool {
         match item {
             MenuItem::Continue => self.game.is_some(),
@@ -180,7 +176,6 @@ impl App {
         }
     }
 
-    /// One step through the item list, clamped at both ends.
     fn step(&self, item: MenuItem, op: Direction) -> MenuItem {
         let i = MenuItem::ALL.iter().position(|&m| m == item).unwrap_or(0);
         let next = match op {
@@ -192,7 +187,7 @@ impl App {
     }
 
     /// Same shape as `Game::shift_cursor`: step, skip what can't be landed on,
-    /// and give up rather than loop when the rest of that direction is dead.
+    /// give up rather than loop when the rest of that direction is dead.
     fn shift_selection(&mut self, op: Direction) {
         let mut candidate = self.step(self.selected, op);
         while !self.is_selectable(candidate) {
@@ -205,9 +200,11 @@ impl App {
         self.selected = candidate;
     }
 
-    // --- Output ---
-
     pub fn tick(&mut self) {
+        if self.last_frame_time.elapsed() >= Duration::from_millis(Self::FRAME_INTERVAL) {
+            self.frame = self.frame.wrapping_add(1);
+            self.last_frame_time = Instant::now();
+        }
         if let Some(game) = self.game.as_mut() {
             game.tick();
         }
@@ -224,7 +221,8 @@ impl App {
         let inner = Self::WIDTH - 2;
         let rule = "═".repeat(inner);
 
-        let mut out = format!("╔{rule}╗\n");
+        let mut out = self.logo.render(self.frame, Self::WIDTH, Self::LOGO_HEIGHT);
+        out.push_str(&format!("╔{rule}╗\n"));
         out.push_str(&Self::centered("RUSTY SUDOKU", inner));
         out.push_str(&format!("╚{rule}╝\n\n"));
 
@@ -242,8 +240,7 @@ impl App {
     }
 
     fn centered(text: &str, width: usize) -> String {
-        // chars().count(), not len() - len() is bytes, and these are box-drawing
-        // characters that take more than one byte each.
+        // chars().count(), not len() - len() counts bytes, and these aren't ASCII.
         let pad = width.saturating_sub(text.chars().count());
         let left = pad / 2;
         format!("║{}{text}{}║\n", " ".repeat(left), " ".repeat(pad - left))
