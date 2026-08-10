@@ -1,11 +1,11 @@
-use crate::game::{Direction, Game};
 use crate::board::Board;
+use crate::game::{Direction, Game};
 use crate::puzzle::Puzzle;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn solution() -> Vec<Vec<i32>> {
         vec![
             vec![1, 2, 3, 4],
