@@ -24,9 +24,11 @@ cargo test
 
 ## What's built so far
 
-The game is playable end to end: it generates a random 9×9 puzzle, opens on the
-alternate screen in raw mode, and lets you navigate with arrow keys, type digits,
-and clear cells — with every move checked against the rules. **42 tests passing.**
+The game is playable end to end: it opens on a menu, generates a random 9×9
+puzzle when you start one, and lets you navigate with arrow keys, type digits,
+and clear cells — with every move checked against the rules. Esc drops back to
+the menu without losing the game, and Continue picks it back up.
+**61 tests passing.**
 
 ### Grid (`src/grid.rs`)
 
@@ -76,26 +78,46 @@ can answer both "is this legal?" and "is this right?".
 - `first_editable()` — first non-clue cell, for initial cursor placement
 - `render(cursor, blink)` — full board with the cursor cell highlighted
 
-### App (`src/app.rs`)
+### Game (`src/game.rs`)
 
-Interaction state, no rendering logic of its own:
+One round of play — everything that only makes sense once a game exists:
 
 - `cursor`, `highlight_on` + `last_blink_time` (blink phase), `last_error`
-- `Action` / `Direction` enums — input is translated to intent before it reaches
-  the game logic
+- `Direction` — the four cursor moves
 - `shift_cursor` — clamps at the board edges **and skips over given clues**, so
   the cursor only ever rests where the player can type. Gives up rather than
   looping when only clues remain in that direction
 - `step` — pure position-in/position-out helper the cursor logic is built on
+- `move_cursor` — `shift_cursor` plus dropping the stale rejection message
 - `set_current_cell` / `clear_current_cell` — store the rejection reason in
   `last_error`, cleared on the next successful action or cursor move
-- `view()` — board render plus the current error message, if any
+- `view()` — board render, the current error message if any, and the key hints
+
+### App (`src/app.rs`)
+
+The router. Owns which screen is showing and interprets input for it:
+
+- `Screen` (`Menu` / `Game`), `MenuItem` (`NewGame` / `Continue` / `Quit`), and
+  `game: Option<Game>` — the menu exists before any game does, so the game is
+  optional rather than assumed
+- `screen` and `game` are **private**, changed only through `start_game`,
+  `resume` and `open_menu`. `Screen::Game` with no game is representable but
+  invalid, so it's gated in one place the way `set_cell_gated` gates the rules
+- `Input` — a keypress with no screen-specific meaning attached
+  (`Up`, `Digit(n)`, `Confirm`, `Back`, …). Defined here rather than in `tui` so
+  the dependency points from the edge into the core
+- `Request` — what `App` needs `main` to do next (`Continue` / `NewGame` /
+  `Exit`). A bool can't distinguish "back to the menu" from "exit the program"
+- `shift_selection` — steps through menu items and **skips `Continue` until a
+  game exists**, the same step-skip-give-up shape as `shift_cursor`
+- `view()` — the menu, or the running game's view
 
 ### Terminal (`src/tui.rs`)
 
 - `TerminalGuard` — enters the alternate screen and raw mode on construction,
   restores both in `Drop` so every exit path cleans up
-- `key_to_action` — arrow keys, `1`–`9`, Backspace, `q`
+- `key_to_input` — arrow keys, `1`–`9`, Backspace/Delete/`0`, Enter, Esc/`q`.
+  Translation only; what a key *means* is decided by `App`
 - `draw` — clear, render, flush
 
 ### Dependencies
@@ -108,13 +130,14 @@ Interaction state, no rendering logic of its own:
 
 ```text
 src/
-  main.rs    — entry point, event loop
-  app.rs     — App state, cursor movement, input intent
+  main.rs    — entry point, event loop, puzzle generation
+  app.rs     — screen routing, menu state, input interpretation
+  game.rs    — one round of play: cursor, blink phase, last error
   board.rs   — play surface, rule enforcement, OpError
   puzzle.rs  — solution generation + clue mask
   grid.rs    — shared rendering trait
   tui.rs     — terminal setup/teardown, key translation
-  tests/     — unit tests (test_app, test_board, test_puzzle)
+  tests/     — unit tests (test_app, test_board, test_game, test_puzzle)
 ```
 
 ## Architecture
@@ -123,12 +146,21 @@ src/
 |---|---|
 | `Puzzle` | Generated truth — solution grid and which cells are revealed |
 | `Board` | Play surface — cells, rendering, and **all rule enforcement** |
-| `App` | Interaction — cursor, blink phase, last error, input intent |
+| `Game` | One round — cursor, blink phase, last error |
+| `App` | Routing — which screen is showing, and what input means on it |
 | `TerminalGuard` | Terminal mode and raw key events |
 
-`Board` owns the grid, how it looks, and what moves are legal. `App` owns how the
-user interacts with it. Rules never live in the input handler: `App` asks `Board`
-and reports the answer, so any future caller gets the same enforcement.
+`Board` owns the grid, how it looks, and what moves are legal. `Game` owns how
+the user interacts with one board. `App` owns which screen the user is on.
+Rules never live in the input handler: `Game` asks `Board` and reports the
+answer, so any future caller gets the same enforcement.
+
+Effects stay at the edges in both directions. `tui` translates keys into
+`Input` without knowing what screen is up, and `main` — not `App` — reaches for
+the RNG: choosing "New Game" returns `Request::NewGame`, and `main` generates
+the puzzle and hands the board back through `start_game`. That's what keeps
+every menu test able to mount a fixed 4×4 board instead of running a
+backtracking search.
 
 ## Phased build order
 
@@ -177,35 +209,37 @@ and reports the answer, so any future caller gets the same enforcement.
   collapses "cell is full" and "duplicate in row/col/box" into one `false`
 - [ ] Variable board sizes (`Board` is size-generic; `main` hardcodes 9×9)
 
-### Phase 6 — Screens: new game / continue (next pickup)
+### Phase 6 — Screens: new game / continue
 
-`App` currently *is* the game screen — `App::new` takes a `Board` and calls
-`first_editable()` on it, so there is no way to have an app that isn't already
-mid-game. A menu forces a split between the app and the game it's running.
+`App` used to *be* the game screen — `App::new` took a `Board` and called
+`first_editable()` on it, so there was no way to have an app that wasn't already
+mid-game. The menu forced a split between the app and the game it's running.
 
-**Stage 1 — in-session (no new dependencies)**
+**Stage 1 — in-session (no new dependencies) ✅**
 
-- [ ] Extract today's `App` fields into a `Game` struct (`src/game.rs`); `App`
+- [x] Extract the old `App` fields into a `Game` struct (`src/game.rs`); `App`
   becomes the router, holding `screen: Screen` and `game: Option<Game>`
-- [ ] `Screen` / `MenuItem` enums — the selected item is a variant, not an index
-- [ ] Menu navigation skips `Continue` while `game.is_none()` — the same
+- [x] `Screen` / `MenuItem` enums — the selected item is a variant, not an index
+- [x] Menu navigation skips `Continue` while `game.is_none()` — the same
   step-and-check shape as `shift_cursor` skipping locked clues
-- [ ] Esc from a game returns to the menu with the `Game` still alive;
-  `Continue` re-enters it
-- [ ] Keep `screen` and `game` private, transitioning only through methods
+- [x] Esc from a game returns to the menu with the `Game` still alive;
+  `Continue` re-enters it on the same cursor
+- [x] Keep `screen` and `game` private, transitioning only through methods
   (`start_game`, `resume`, `open_menu`), so the one representable-but-invalid
   combination — `Screen::Game` with no game — is gated in a single place, the
   way `set_cell_gated` gates the rules
-- [ ] `tui` emits screen-agnostic `Input` (Up/Down/Digit/Erase/Confirm/Back) and
+- [x] `tui` emits screen-agnostic `Input` (Up/Down/Digit/Erase/Confirm/Back) and
   `App` decides what each means per screen, so menu behavior is unit-testable
   instead of buried in the one layer with no tests
-- [ ] Replace `handle_action -> bool` with a request enum (`Continue`, `Exit`,
+- [x] Replace `handle_action -> bool` with a request enum (`Continue`, `Exit`,
   `NewGame`) — a bool can't distinguish "back to menu" from "exit the program".
   `main` fulfills `NewGame` by generating the puzzle and calling
   `start_game(board)`, so RNG stays at the edge and tests can mount a fixed
   `Puzzle::new(...)`
-- [ ] Menu rendering through `view()`, reusing the existing blink `tick()` for
-  the selection highlight
+- [x] Menu rendering through `view()`, boxed to the board's 37-column width.
+  Selection is a static `▸` marker rather than the blink `tick()` originally
+  sketched here — a blinking menu row reads as a glitch, and `tick()` has no
+  game to drive it while the menu is up
 
 **Stage 2 — persistence (later)**
 
@@ -216,7 +250,7 @@ mid-game. A menu forces a split between the app and the game it's running.
   `last_blink_time`, and `last_error` are transient and rebuilt on load —
   `Instant` is an opaque monotonic reading with no meaning across processes
 
-### Phase 7 — Game state
+### Phase 7 — Game state (next pickup)
 
 The rules layer is complete; nothing yet tracks the *game*. This is the gap:
 
@@ -388,12 +422,15 @@ take a generic `impl Rng`.
 
 ## Target input spec
 
-| Action | Keys |
-|---|---|
-| Move | Up/Down/Left/Right arrow keys |
-| Fill | `1`–`9` at cursor |
-| Clear | Backspace, Delete, or `0` |
-| Quit | `q` or Esc |
+| Action | Keys | Screen |
+|---|---|---|
+| Move | Up/Down/Left/Right arrow keys | Game |
+| Fill | `1`–`9` at cursor | Game |
+| Clear | Backspace, Delete, or `0` | Game |
+| Back to menu | `q` or Esc | Game |
+| Change selection | Up/Down arrow keys | Menu |
+| Select | Enter | Menu |
+| Quit | `q` or Esc, or the Quit entry | Menu |
 
 ## Done criteria (interactive board MVP) ✅
 
