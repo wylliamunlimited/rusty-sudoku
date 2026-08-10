@@ -1,4 +1,5 @@
-use crate::app::{Action, App, Direction};
+use crate::app::{Action, App};
+use crate::game::Direction;
 use crossterm::event::{Event, KeyCode, KeyEventKind, read};
 use crossterm::{
     execute, terminal,
