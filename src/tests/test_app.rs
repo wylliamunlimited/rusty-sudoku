@@ -15,8 +15,7 @@ mod tests {
         ]
     }
 
-    /// A board with no clues, so every cell is editable and the cursor starts
-    /// at (0, 0). Built without the RNG - App never generates puzzles itself.
+    /// No clues, so every cell is editable and the cursor starts at (0, 0).
     fn board() -> Board {
         Board::from_puzzle(Puzzle::new(solution(), vec![vec![false; 4]; 4]))
     }
@@ -93,8 +92,7 @@ mod tests {
     fn test_confirm_on_new_game_asks_main_for_a_board() {
         let mut app = App::new();
 
-        // App requests the effect rather than performing it, so it's still on
-        // the menu until main hands a board back.
+        // Still on the menu until main hands a board back.
         assert_eq!(app.handle_input(Input::Confirm), Request::NewGame);
         assert_eq!(app.screen(), Screen::Menu);
         assert!(!app.has_game());
@@ -117,8 +115,6 @@ mod tests {
 
     #[test]
     fn test_confirm_on_continue_does_nothing_without_a_game() {
-        // Continue can't be reached by navigation with no game, but confirming
-        // it must not strand the app on an empty Game screen either.
         let mut app = App::new();
 
         assert_eq!(app.handle_input(Input::Confirm), Request::NewGame);
@@ -204,7 +200,6 @@ mod tests {
         assert_eq!(app.game().unwrap().board.cells[0][0], None);
         assert!(app.game().unwrap().last_error.is_some());
 
-        // Moving away clears the message - it described the old cell.
         app.handle_input(Input::Right);
         assert!(app.game().unwrap().last_error.is_none());
     }
