@@ -177,7 +177,7 @@ and reports the answer, so any future caller gets the same enforcement.
   collapses "cell is full" and "duplicate in row/col/box" into one `false`
 - [ ] Variable board sizes (`Board` is size-generic; `main` hardcodes 9×9)
 
-### Phase 6 — Game state (next pickup)
+### Phase 7 — Game state (next pickup)
 
 The rules layer is complete; nothing yet tracks the *game*. This is the gap:
 
@@ -189,7 +189,7 @@ The rules layer is complete; nothing yet tracks the *game*. This is the gap:
   allowing mistakes to land would mean dropping `is_correct_move` from the gate
 - [ ] Timer / move count
 
-### Phase 7 — Ratatui widgets (optional polish)
+### Phase 8 — Ratatui widgets (optional polish)
 
 - [ ] Swap string rendering for Ratatui layout/widgets (dependency is declared
   but unused)
