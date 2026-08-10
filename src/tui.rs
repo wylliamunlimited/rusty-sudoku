@@ -14,29 +14,26 @@ impl TerminalGuard {
     pub fn new() -> io::Result<Self> {
         execute!(io::stdout(), EnterAlternateScreen)?;
         terminal::enable_raw_mode()?;
+        print!("\x1B[?25l"); // hide the caret
+        io::stdout().flush()?;
 
         Ok(TerminalGuard)
     }
 
+    /// Keys in, screen-agnostic intent out. What each one *means* is App's call.
     pub fn key_to_input(&self, key: KeyCode) -> Option<Input> {
-        // Translation Function - keys in, screen-agnostic intent out. What each
-        // of these *means* is decided by App, which knows what's on screen.
-
         match key {
-            // Shift
             KeyCode::Left => Some(Input::Left),
             KeyCode::Right => Some(Input::Right),
             KeyCode::Up => Some(Input::Up),
             KeyCode::Down => Some(Input::Down),
 
-            // Ops
             KeyCode::Backspace | KeyCode::Delete | KeyCode::Char('0') => Some(Input::Erase),
             KeyCode::Char(c @ '1'..='9') => {
                 let digit = c.to_digit(10).unwrap() as i32;
                 Some(Input::Digit(digit))
             }
 
-            // Screen control
             KeyCode::Enter => Some(Input::Confirm),
             KeyCode::Esc | KeyCode::Char('q') => Some(Input::Back),
 
@@ -46,9 +43,7 @@ impl TerminalGuard {
 
     pub fn read_input(&self) -> io::Result<Option<Input>> {
         let input = match read()? {
-            Event::Key(event) if event.kind == KeyEventKind::Press => {
-                self.key_to_input(event.code)
-            }
+            Event::Key(event) if event.kind == KeyEventKind::Press => self.key_to_input(event.code),
             _ => None,
         };
 
@@ -56,9 +51,16 @@ impl TerminalGuard {
     }
 
     pub fn draw(&self, app: &App) -> io::Result<()> {
-        // Include the redraw logics
-        print!("\x1B[2J\x1B[H");
-        print!("{}", app.view().replace('\n', "\r\n"));
+        // Overwrite in place rather than clearing first - a full clear at the
+        // animation's frame rate flickers.
+        let mut out = String::from("\x1B[H");
+        for line in app.view().lines() {
+            out.push_str(line);
+            out.push_str("\x1B[K\r\n"); // erase whatever the last frame left
+        }
+        out.push_str("\x1B[J");
+
+        print!("{out}");
         io::stdout().flush()?;
 
         Ok(())
@@ -67,6 +69,7 @@ impl TerminalGuard {
 
 impl Drop for TerminalGuard {
     fn drop(&mut self) {
+        let _ = io::stdout().write_all(b"\x1B[?25h");
         let _ = terminal::disable_raw_mode();
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
     }
