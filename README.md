@@ -177,7 +177,37 @@ and reports the answer, so any future caller gets the same enforcement.
   collapses "cell is full" and "duplicate in row/col/box" into one `false`
 - [ ] Variable board sizes (`Board` is size-generic; `main` hardcodes 9×9)
 
-### Phase 7 — Game state (next pickup)
+### Phase 6 — Screens: new game / continue (next pickup)
+
+`App` currently *is* the game screen — `App::new` takes a `Board` and calls
+`first_editable()` on it, so there is no way to have an app that isn't already
+mid-game. A menu forces a split between the app and the game it's running.
+
+**Stage 1 — in-session (no new dependencies)**
+
+- [ ] Extract today's `App` fields into a `Game` struct (`src/game.rs`); `App`
+  becomes the router, holding `screen: Screen` and `game: Option<Game>`
+- [ ] `Screen` / `MenuItem` enums — the selected item is a variant, not an index
+- [ ] Menu navigation skips `Continue` while `game.is_none()` — the same
+  step-and-check shape as `shift_cursor` skipping locked clues
+- [ ] Esc from a game returns to the menu with the `Game` still alive;
+  `Continue` re-enters it
+- [ ] Keep `screen` and `game` private, transitioning only through methods
+  (`start_game`, `resume`, `open_menu`), so the one representable-but-invalid
+  combination — `Screen::Game` with no game — is gated in a single place, the
+  way `set_cell_gated` gates the rules
+- [ ] `tui` emits screen-agnostic `Input` (Up/Down/Digit/Erase/Confirm/Back) and
+  `App` decides what each means per screen, so menu behavior is unit-testable
+  instead of buried in the one layer with no tests
+- [ ] Replace `handle_action -> bool` with a request enum (`Continue`, `Exit`,
+  `NewGame`) — a bool can't distinguish "back to menu" from "exit the program".
+  `main` fulfills `NewGame` by generating the puzzle and calling
+  `start_game(board)`, so RNG stays at the edge and tests can mount a fixed
+  `Puzzle::new(...)`
+- [ ] Menu rendering through `view()`, reusing the existing blink `tick()` for
+  the selection highlight
+
+### Phase 7 — Game state
 
 The rules layer is complete; nothing yet tracks the *game*. This is the gap:
 
