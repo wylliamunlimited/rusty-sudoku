@@ -18,8 +18,8 @@ fn main() -> io::Result<()> {
         guard.draw(&app)?;
 
         if poll(Duration::from_millis(500))?
-            && let Some(action) = guard.handle_op()?
-            && !app.handle_action(action)
+            && let Some(input) = guard.read_input()?
+            && !app.handle_input(input)
         {
             break;
         }

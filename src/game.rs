@@ -48,6 +48,7 @@ impl Game {
         if let Some(err) = &self.last_error {
             out.push_str(&format!("\n{err}\n"));
         }
+        out.push_str("\n↑↓←→ move · 1-9 fill · ⌫ clear · Esc quit\n");
         out
     }
 
