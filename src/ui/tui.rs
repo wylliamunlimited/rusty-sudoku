@@ -1,4 +1,4 @@
-use crate::app::{App, Input};
+use crate::ui::{App, Input};
 use crossterm::event::{Event, KeyCode, KeyEventKind, read};
 use crossterm::{
     execute, terminal,

@@ -1,4 +1,4 @@
-use crate::puzzle::Puzzle;
+use crate::sudoku::Puzzle;
 use std::collections::HashSet;
 
 #[cfg(test)]

@@ -81,9 +81,9 @@ not an exhaustive menu.
 
 - Rust edition 2024.
 - Layered architecture (keep concerns separated):
-  - `Board` (`src/board.rs`) — grid data, rendering, move validation.
-  - `App` (`src/app.rs`) — pure game state (cursor, blink phase); no I/O.
-  - `tui::TerminalGuard` (`src/tui.rs`) — terminal effects via RAII (`Drop`).
+  - `Board` (`src/sudoku/board.rs`) — grid data, rendering, move validation.
+  - `App` (`src/ui/app.rs`) — pure game state (cursor, blink phase); no I/O.
+  - `tui::TerminalGuard` (`src/ui/tui.rs`) — terminal effects via RAII (`Drop`).
   - `main` (`src/main.rs`) — thin loop; owns all effects, drives `App`.
 - Guiding principle throughout: **push side effects (I/O, the clock) to the
   edges; keep the core (`Board`, `App`) pure and testable.**

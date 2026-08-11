@@ -1,4 +1,4 @@
-use crate::particles::Cloud;
+use crate::ui::Cloud;
 
 #[cfg(test)]
 mod tests {

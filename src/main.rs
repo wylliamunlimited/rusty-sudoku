@@ -1,9 +1,7 @@
-use rusty_sudoku::app::{App, Request};
-use rusty_sudoku::board::Board;
-use rusty_sudoku::puzzle::Puzzle;
-
 use crossterm::event::poll;
-use rusty_sudoku::tui::TerminalGuard;
+
+use rusty_sudoku::sudoku::{Board, Puzzle};
+use rusty_sudoku::ui::{App, Request, TerminalGuard};
 
 use std::io;
 use std::time::Duration;

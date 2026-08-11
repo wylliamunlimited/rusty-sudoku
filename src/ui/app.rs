@@ -1,6 +1,5 @@
-use crate::board::Board;
-use crate::game::{Direction, Game};
-use crate::particles::Cloud;
+use crate::sudoku::Board;
+use crate::ui::{Cloud, Direction, Game};
 
 use std::time::{Duration, Instant};
 

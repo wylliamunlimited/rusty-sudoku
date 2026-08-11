@@ -1,8 +1,7 @@
 use std::collections::HashSet;
 use std::fmt;
 
-use crate::grid::Grid;
-use crate::puzzle::Puzzle;
+use crate::sudoku::{Grid, Puzzle};
 
 pub struct Board {
     pub(crate) size: usize,

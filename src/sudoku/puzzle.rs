@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 
 use std::collections::HashSet;
 
-use crate::grid::Grid;
+use crate::sudoku::Grid;
 
 pub struct Puzzle {
     pub(crate) solution: Vec<Vec<i32>>,

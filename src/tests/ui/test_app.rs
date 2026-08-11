@@ -1,6 +1,5 @@
-use crate::app::{App, Input, MenuItem, Request, Screen};
-use crate::board::Board;
-use crate::puzzle::Puzzle;
+use crate::sudoku::{Board, Puzzle};
+use crate::ui::{App, Input, MenuItem, Request, Screen};
 
 #[cfg(test)]
 mod tests {

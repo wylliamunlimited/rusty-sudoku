@@ -28,9 +28,9 @@ The game is playable end to end: it opens on a menu, generates a random 9×9
 puzzle when you start one, and lets you navigate with arrow keys, type digits,
 and clear cells — with every move checked against the rules. Esc drops back to
 the menu without losing the game, and Continue picks it back up.
-**61 tests passing.**
+**70 tests passing.**
 
-### Grid (`src/grid.rs`)
+### Grid (`src/sudoku/grid.rs`)
 
 Shared rendering trait implemented by both `Board` and `Puzzle`:
 
@@ -40,7 +40,7 @@ Shared rendering trait implemented by both `Board` and `Puzzle`:
 - `BorderStyle` — shared border template for top, bottom, thick middle, and thin
   middle lines
 
-### Puzzle (`src/puzzle.rs`)
+### Puzzle (`src/sudoku/puzzle.rs`)
 
 Generated game state, kept separate from `Board` (the play surface):
 
@@ -58,7 +58,7 @@ Generated game state, kept separate from `Board` (the play surface):
 - `validate(grid, row, col, box_size)` — row/column/box conflict check used
   during generation
 
-### Board (`src/board.rs`)
+### Board (`src/sudoku/board.rs`)
 
 The play surface. Holds the player's grid plus the `Puzzle` it came from, so it
 can answer both "is this legal?" and "is this right?".
@@ -78,7 +78,7 @@ can answer both "is this legal?" and "is this right?".
 - `first_editable()` — first non-clue cell, for initial cursor placement
 - `render(cursor, blink)` — full board with the cursor cell highlighted
 
-### Game (`src/game.rs`)
+### Game (`src/ui/game.rs`)
 
 One round of play — everything that only makes sense once a game exists:
 
@@ -93,7 +93,7 @@ One round of play — everything that only makes sense once a game exists:
   `last_error`, cleared on the next successful action or cursor move
 - `view()` — board render, the current error message if any, and the key hints
 
-### App (`src/app.rs`)
+### App (`src/ui/app.rs`)
 
 The router. Owns which screen is showing and interprets input for it:
 
@@ -112,7 +112,22 @@ The router. Owns which screen is showing and interprets input for it:
   game exists**, the same step-skip-give-up shape as `shift_cursor`
 - `view()` — the menu, or the running game's view
 
-### Terminal (`src/tui.rs`)
+### Particles (`src/ui/particles.rs`)
+
+The rotating cube on the menu screen, drawn in Braille characters.
+
+- Each Braille codepoint is `U+2800` plus an 8-bit mask, one bit per dot in a
+  2×4 cell — so a 37×8 patch of terminal is really a 74×32 canvas. Dots 7 and 8
+  were bolted onto the original 6-dot standard later, which is why the bottom
+  row takes the high bits (`0x40`, `0x80`) rather than following on from `0x20`
+- `Cloud::cube(per_edge)` — samples points along the twelve edges of a cube.
+  Edges give the rotation something rigid to read against; a uniform ball of
+  points looks static as it turns
+- `render(frame, width, height)` — one frame, a **pure function of `frame`**, so
+  there is no clock read inside. Points behind the centre are drawn dim, points
+  in front bright, which is what sells the depth
+
+### Terminal (`src/ui/tui.rs`)
 
 - `TerminalGuard` — enters the alternate screen and raw mode on construction,
   restores both in `Drop` so every exit path cleans up
@@ -124,21 +139,26 @@ The router. Owns which screen is showing and interprets input for it:
 
 - `crossterm` — raw mode, alternate screen, key events
 - `rand` — puzzle generation
-- `ratatui` — declared but **not yet used** (reserved for the widget phase)
 
 ## Project structure
 
 ```text
 src/
-  main.rs    — entry point, event loop, puzzle generation
-  app.rs     — screen routing, menu state, input interpretation
-  game.rs    — one round of play: cursor, blink phase, last error
-  board.rs   — play surface, rule enforcement, OpError
-  puzzle.rs  — solution generation + clue mask
-  grid.rs    — shared rendering trait
-  tui.rs     — terminal setup/teardown, key translation
-  tests/     — unit tests (test_app, test_board, test_game, test_puzzle)
+  main.rs         — entry point, event loop, puzzle generation
+  sudoku/         — the pure domain: no I/O, no clock, no terminal
+    grid.rs       — shared rendering trait + border styles
+    board.rs      — play surface, rule enforcement, OpError
+    puzzle.rs     — solution generation + clue mask
+  ui/             — interaction; tui.rs is the only module that touches I/O
+    app.rs        — screen routing, menu state, input interpretation
+    game.rs       — one round of play: cursor, blink phase, last error
+    particles.rs  — Braille particle renderer for the menu logo
+    tui.rs        — terminal setup/teardown, key translation
+  tests/          — unit tests, mirroring sudoku/ and ui/
 ```
+
+`sudoku` never names anything in `ui`, so the dependency only ever points
+inward: `main` → `ui` → `sudoku`.
 
 ## Architecture
 
@@ -217,7 +237,7 @@ mid-game. The menu forced a split between the app and the game it's running.
 
 **Stage 1 — in-session (no new dependencies) ✅**
 
-- [x] Extract the old `App` fields into a `Game` struct (`src/game.rs`); `App`
+- [x] Extract the old `App` fields into a `Game` struct (`src/ui/game.rs`); `App`
   becomes the router, holding `screen: Screen` and `game: Option<Game>`
 - [x] `Screen` / `MenuItem` enums — the selected item is a variant, not an index
 - [x] Menu navigation skips `Continue` while `game.is_none()` — the same
