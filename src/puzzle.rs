@@ -39,7 +39,7 @@ impl Puzzle {
             if stack[depth].1 >= size {
                 draft[row][col] = 0;
                 stack.pop();
-                if stack.len() == 0 {
+                if stack.is_empty() {
                     break;
                 }
                 let last = stack.len() - 1;
@@ -103,15 +103,14 @@ impl Puzzle {
         }
 
         // Box
-        let mut aggregate: Vec<i32> = Vec::new();
         let box_row = (row / box_size) * box_size;
         let box_col = (col / box_size) * box_size;
 
-        for r in box_row..box_row + box_size {
-            for c in box_col..box_col + box_size {
-                aggregate.push(grid[r][c]);
-            }
-        }
+        let aggregate: Vec<i32> = grid[box_row..box_row + box_size]
+            .iter()
+            .flat_map(|r| &r[box_col..box_col + box_size])
+            .copied()
+            .collect();
         if !Self::has_no_duplicates(&aggregate) {
             return false; // Box conflicts
         }
