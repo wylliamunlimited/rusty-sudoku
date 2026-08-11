@@ -156,27 +156,7 @@ impl Board {
     }
 
     pub fn render(&self, cursor: (usize, usize), blink: bool) -> String {
-        let mut output = String::new();
-        output.push_str(&self.top_border());
-
-        for row_id in 0..self.size {
-            let hl = if row_id == cursor.0 && blink {
-                Some(cursor.1)
-            } else {
-                None
-            };
-            output.push_str(&self.format_row(row_id, hl));
-
-            if row_id == self.size - 1 {
-                output.push_str(&self.bottom_border());
-            } else if (row_id + 1) % self.box_size == 0 {
-                output.push_str(&self.thick_middle_border());
-            } else {
-                output.push_str(&self.thin_middle_border());
-            }
-        }
-
-        output
+        self.render_grid(blink.then_some(cursor))
     }
 }
 
@@ -197,21 +177,7 @@ impl Grid for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.top_border())?;
-
-        for row_id in 0..self.size {
-            write!(f, "{}", self.format_row(row_id, None))?;
-
-            if row_id == self.size - 1 {
-                write!(f, "{}", self.bottom_border())?;
-            } else if (row_id + 1) % self.box_size == 0 {
-                write!(f, "{}", self.thick_middle_border())?;
-            } else {
-                write!(f, "{}", self.thin_middle_border())?;
-            }
-        }
-
-        Ok(())
+        write!(f, "{}", self.render_grid(None))
     }
 }
 
@@ -225,46 +191,4 @@ impl fmt::Display for OpError {
         };
         write!(f, "{message}")
     }
-}
-
-pub struct BorderStyle {
-    pub(crate) left: char,
-    pub(crate) fill: &'static str,
-    pub(crate) cell: char,
-    pub(crate) box_junction: char,
-    pub(crate) right: char,
-}
-
-impl BorderStyle {
-    pub(crate) const TOP: BorderStyle = BorderStyle {
-        left: '╔',
-        fill: "═══",
-        cell: '╤',
-        box_junction: '╦',
-        right: '╗',
-    };
-
-    pub(crate) const BOTTOM: BorderStyle = BorderStyle {
-        left: '╚',
-        fill: "═══",
-        cell: '╧',
-        box_junction: '╩',
-        right: '╝',
-    };
-
-    pub(crate) const THICK: BorderStyle = BorderStyle {
-        left: '╠',
-        fill: "═══",
-        cell: '╪',
-        box_junction: '╬',
-        right: '╣',
-    };
-
-    pub(crate) const THIN: BorderStyle = BorderStyle {
-        left: '╟',
-        fill: "───",
-        cell: '┼',
-        box_junction: '╫',
-        right: '╢',
-    };
 }

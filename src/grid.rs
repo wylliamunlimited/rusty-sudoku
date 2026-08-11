@@ -1,4 +1,44 @@
-use crate::board::BorderStyle;
+pub struct BorderStyle {
+    pub(crate) left: char,
+    pub(crate) fill: &'static str,
+    pub(crate) cell: char,
+    pub(crate) box_junction: char,
+    pub(crate) right: char,
+}
+
+impl BorderStyle {
+    pub(crate) const TOP: BorderStyle = BorderStyle {
+        left: '╔',
+        fill: "═══",
+        cell: '╤',
+        box_junction: '╦',
+        right: '╗',
+    };
+
+    pub(crate) const BOTTOM: BorderStyle = BorderStyle {
+        left: '╚',
+        fill: "═══",
+        cell: '╧',
+        box_junction: '╩',
+        right: '╝',
+    };
+
+    pub(crate) const THICK: BorderStyle = BorderStyle {
+        left: '╠',
+        fill: "═══",
+        cell: '╪',
+        box_junction: '╬',
+        right: '╣',
+    };
+
+    pub(crate) const THIN: BorderStyle = BorderStyle {
+        left: '╟',
+        fill: "───",
+        cell: '┼',
+        box_junction: '╫',
+        right: '╢',
+    };
+}
 
 pub trait Grid {
     fn size(&self) -> usize;
@@ -15,7 +55,7 @@ pub trait Grid {
 
             if i == self.size() - 1 {
                 output.push(style.right);
-            } else if (i + 1) % self.box_size() == 0 {
+            } else if (i + 1).is_multiple_of(self.box_size()) {
                 output.push(style.box_junction);
             } else {
                 output.push(style.cell);
@@ -42,6 +82,16 @@ pub trait Grid {
         self.border(&BorderStyle::THIN)
     }
 
+    fn row_separator(&self, row_id: usize) -> String {
+        if row_id == self.size() - 1 {
+            self.bottom_border()
+        } else if (row_id + 1).is_multiple_of(self.box_size()) {
+            self.thick_middle_border()
+        } else {
+            self.thin_middle_border()
+        }
+    }
+
     fn format_row(&self, row_id: usize, highlight_col: Option<usize>) -> String {
         let mut output = String::new();
 
@@ -51,14 +101,14 @@ pub trait Grid {
             let cell_str = self.cell_str(row_id, i);
 
             if highlight_col == Some(i) {
-                output.push_str("\x1B[7m"); // before
-                output.push_str(&cell_str); // the 3 chars
-                output.push_str("\x1B[0m"); // after
+                output.push_str("\x1B[7m");
+                output.push_str(&cell_str);
+                output.push_str("\x1B[0m");
             } else {
                 output.push_str(&cell_str);
             }
 
-            if i == self.size() - 1 || (i + 1) % self.box_size() == 0 {
+            if i == self.size() - 1 || (i + 1).is_multiple_of(self.box_size()) {
                 output.push('║');
             } else {
                 output.push('│');
@@ -69,20 +119,13 @@ pub trait Grid {
         output
     }
 
-    fn render_grid(&self) -> String {
-        let mut output = String::new();
-        output.push_str(&self.top_border());
+    fn render_grid(&self, highlight: Option<(usize, usize)>) -> String {
+        let mut output = self.top_border();
 
         for row_id in 0..self.size() {
-            output.push_str(&self.format_row(row_id, None));
-
-            if row_id == self.size() - 1 {
-                output.push_str(&self.bottom_border());
-            } else if (row_id + 1) % self.box_size() == 0 {
-                output.push_str(&self.thick_middle_border());
-            } else {
-                output.push_str(&self.thin_middle_border());
-            }
+            let col = highlight.filter(|&(r, _)| r == row_id).map(|(_, c)| c);
+            output.push_str(&self.format_row(row_id, col));
+            output.push_str(&self.row_separator(row_id));
         }
 
         output
