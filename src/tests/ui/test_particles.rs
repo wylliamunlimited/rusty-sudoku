@@ -11,7 +11,6 @@ mod tests {
         Cloud::cube(12).render(n, W, H)
     }
 
-    /// Strip the dim/reset escapes so assertions see glyphs alone.
     fn visible(s: &str) -> String {
         s.replace("\x1B[2m", "").replace("\x1B[0m", "")
     }
@@ -65,13 +64,11 @@ mod tests {
 
     #[test]
     fn test_far_side_is_dimmed() {
-        // The back edges always face away, so every frame has a dim run.
         assert!(frame(0).contains("\x1B[2m"));
     }
 
     #[test]
     fn test_nothing_escapes_the_canvas() {
-        // Out-of-bounds points are dropped, not wrapped onto the next row.
         for n in 0..60 {
             assert_eq!(visible(&frame(n)).lines().count(), H, "frame {n}");
         }

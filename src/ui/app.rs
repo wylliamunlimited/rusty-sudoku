@@ -3,8 +3,6 @@ use crate::ui::{Cloud, Direction, Game};
 
 use std::time::{Duration, Instant};
 
-/// A keypress with no screen-specific meaning attached. `tui` produces these;
-/// `App` decides what each one does on the current screen.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Input {
     Up,
@@ -30,8 +28,6 @@ pub enum MenuItem {
     Quit,
 }
 
-/// What `App` needs `main` to do next. `NewGame` is a request for an effect
-/// (the RNG) that `App` deliberately can't perform itself.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Request {
     Continue,
@@ -61,10 +57,9 @@ impl MenuItem {
 }
 
 impl App {
-    /// Matches the board's rendered width, so the menu and the grid line up.
     const WIDTH: usize = 37;
     const LOGO_HEIGHT: usize = 8;
-    const FRAME_INTERVAL: u64 = 80; // ms
+    const FRAME_INTERVAL: Duration = Duration::from_millis(80);
 
     pub fn new() -> Self {
         App {
@@ -92,10 +87,6 @@ impl App {
     pub fn has_game(&self) -> bool {
         self.game.is_some()
     }
-
-    // Transitions: the only things allowed to touch screen/game. The pair
-    // (Screen::Game, game: None) is representable but invalid, so it's gated
-    // here the way Board::set_cell_gated gates the rules.
 
     pub fn start_game(&mut self, board: Board) {
         self.game = Some(Game::new(board));
@@ -143,8 +134,6 @@ impl App {
     }
 
     fn handle_game_input(&mut self, input: Input) -> Request {
-        // Before the borrow below: open_menu needs &mut self, which
-        // self.game.as_mut() would still be holding a piece of.
         if input == Input::Back {
             self.open_menu();
             return Request::Continue;
@@ -185,8 +174,6 @@ impl App {
         MenuItem::ALL[next]
     }
 
-    /// Same shape as `Game::shift_cursor`: step, skip what can't be landed on,
-    /// give up rather than loop when the rest of that direction is dead.
     fn shift_selection(&mut self, op: Direction) {
         let mut candidate = self.step(self.selected, op);
         while !self.is_selectable(candidate) {
@@ -200,7 +187,7 @@ impl App {
     }
 
     pub fn tick(&mut self) {
-        if self.last_frame_time.elapsed() >= Duration::from_millis(Self::FRAME_INTERVAL) {
+        if self.last_frame_time.elapsed() >= Self::FRAME_INTERVAL {
             self.frame = self.frame.wrapping_add(1);
             self.last_frame_time = Instant::now();
         }
@@ -239,7 +226,6 @@ impl App {
     }
 
     fn centered(text: &str, width: usize) -> String {
-        // chars().count(), not len() - len() counts bytes, and these aren't ASCII.
         let pad = width.saturating_sub(text.chars().count());
         let left = pad / 2;
         format!("║{}{text}{}║\n", " ".repeat(left), " ".repeat(pad - left))

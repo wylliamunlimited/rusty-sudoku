@@ -14,13 +14,12 @@ impl TerminalGuard {
     pub fn new() -> io::Result<Self> {
         execute!(io::stdout(), EnterAlternateScreen)?;
         terminal::enable_raw_mode()?;
-        print!("\x1B[?25l"); // hide the caret
+        print!("\x1B[?25l");
         io::stdout().flush()?;
 
         Ok(TerminalGuard)
     }
 
-    /// Keys in, screen-agnostic intent out. What each one *means* is App's call.
     pub fn key_to_input(&self, key: KeyCode) -> Option<Input> {
         match key {
             KeyCode::Left => Some(Input::Left),
@@ -51,12 +50,10 @@ impl TerminalGuard {
     }
 
     pub fn draw(&self, app: &App) -> io::Result<()> {
-        // Overwrite in place rather than clearing first - a full clear at the
-        // animation's frame rate flickers.
         let mut out = String::from("\x1B[H");
         for line in app.view().lines() {
             out.push_str(line);
-            out.push_str("\x1B[K\r\n"); // erase whatever the last frame left
+            out.push_str("\x1B[K\r\n");
         }
         out.push_str("\x1B[J");
 

@@ -2,8 +2,6 @@ use crate::sudoku::{Board, OpError};
 
 use std::time::{Duration, Instant};
 
-/// A single round of play: the board, where the player is looking, and why the
-/// last move was refused (if it was).
 pub struct Game {
     pub(crate) board: Board,
     pub(crate) cursor: (usize, usize),
@@ -21,23 +19,21 @@ pub enum Direction {
 }
 
 impl Game {
-    // Game State / Logics Warehouse
-
-    const BLINK_INTERVAL: u64 = 500; // 500ms
+    const BLINK_INTERVAL: Duration = Duration::from_millis(500);
 
     pub fn new(board: Board) -> Self {
         let s: (usize, usize) = board.first_editable().unwrap_or((0, 0));
         Game {
             board,
             cursor: s,
-            highlight_on: false,             // Started with no blink
-            last_blink_time: Instant::now(), // Ticking since instantiation
+            highlight_on: false,
+            last_blink_time: Instant::now(),
             last_error: None,
         }
     }
 
     pub fn tick(&mut self) {
-        if self.last_blink_time.elapsed() >= Duration::from_millis(Self::BLINK_INTERVAL) {
+        if self.last_blink_time.elapsed() >= Self::BLINK_INTERVAL {
             self.highlight_on = !self.highlight_on;
             self.last_blink_time = Instant::now();
         }
@@ -52,7 +48,6 @@ impl Game {
         out
     }
 
-    /// Move and drop the stale rejection message - it described the old cell.
     pub fn move_cursor(&mut self, op: Direction) {
         self.last_error = None;
         self.shift_cursor(op);
