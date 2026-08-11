@@ -71,27 +71,24 @@ impl Board {
     }
 
     pub fn is_valid_move(&self, row: usize, col: usize, val: i32) -> bool {
-        // Row
         let mut trial_list: Vec<Option<i32>> = self.cells[row].clone();
         if trial_list[col].is_some() {
-            return false; // A value already exists
+            return false;
         }
         trial_list[col] = Some(val);
         if !Self::has_no_duplicates(&trial_list) {
-            return false; // Row conflicts
+            return false;
         }
 
-        // Column
         let mut trial_list: Vec<Option<i32>> = self.cells.iter().map(|row| row[col]).collect();
         if trial_list[row].is_some() {
-            return false; // A value already exists
+            return false;
         }
         trial_list[row] = Some(val);
         if !Self::has_no_duplicates(&trial_list) {
-            return false; // Row conflicts
+            return false;
         }
 
-        // Box
         let mut trial_list: Vec<Option<i32>> = Vec::new();
         let box_row = (row / self.box_size) * self.box_size;
         let box_col = (col / self.box_size) * self.box_size;

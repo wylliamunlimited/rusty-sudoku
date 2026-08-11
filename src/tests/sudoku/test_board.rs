@@ -87,7 +87,6 @@ mod tests {
 
     #[test]
     fn test_row_format_with_col() {
-        // Blink is handled by render(), not format_row — Some(col) always highlights.
         let rendered_format: String = sample_board().format_row(1, Some(1));
 
         assert_eq!(
@@ -242,7 +241,6 @@ mod tests {
     fn test_board_render() {
         let board = Board::new(9, 3);
 
-        // blink=false → no highlight; empty board matches Display
         let rendered_board: String = board.render((3, 3), false);
 
         assert_eq!(rendered_board, board.to_string());

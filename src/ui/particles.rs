@@ -1,12 +1,5 @@
-//! A rotating cloud of particles drawn with Braille characters.
-//!
-//! Each Braille codepoint is `U+2800` plus an 8-bit mask, one bit per dot in a
-//! 2x4 grid, so a 37x8 patch of screen is really a 74x32 canvas.
-
 const BRAILLE_BASE: u32 = 0x2800;
 
-/// Bit lighting the dot at `[column][row]`. Dots 7-8 were added to the original
-/// 6-dot standard later, so the bottom row takes the high bits.
 const DOT_BITS: [[u8; 4]; 2] = [[0x01, 0x02, 0x04, 0x40], [0x08, 0x10, 0x20, 0x80]];
 
 const SPIN_PER_FRAME: f32 = 0.06;
@@ -18,8 +11,6 @@ pub struct Cloud {
 }
 
 impl Cloud {
-    /// Particles along the twelve edges of a cube. Edges give the rotation
-    /// something rigid to read against; a uniform ball looks static as it turns.
     pub fn cube(per_edge: usize) -> Self {
         let corner = |i: usize| {
             [
@@ -32,7 +23,6 @@ impl Cloud {
         let mut points = Vec::new();
         for a in 0..8usize {
             for b in (a + 1)..8usize {
-                // Corners one bit apart differ on a single axis: an edge.
                 if (a ^ b).count_ones() != 1 {
                     continue;
                 }
@@ -59,7 +49,6 @@ impl Cloud {
         self.points.is_empty()
     }
 
-    /// One frame. Pure in `frame`, so there is no clock read in here.
     pub fn render(&self, frame: u64, width: usize, height: usize) -> String {
         let (dots_w, dots_h) = (width * 2, height * 4);
 

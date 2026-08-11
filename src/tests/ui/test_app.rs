@@ -14,7 +14,6 @@ mod tests {
         ]
     }
 
-    /// No clues, so every cell is editable and the cursor starts at (0, 0).
     fn board() -> Board {
         Board::from_puzzle(Puzzle::new(solution(), vec![vec![false; 4]; 4]))
     }
@@ -25,8 +24,6 @@ mod tests {
         app
     }
 
-    // --- Opening state ---
-
     #[test]
     fn test_starts_on_the_menu_with_no_game() {
         let app = App::new();
@@ -35,8 +32,6 @@ mod tests {
         assert_eq!(app.selected(), MenuItem::NewGame);
         assert!(!app.has_game());
     }
-
-    // --- Menu navigation ---
 
     #[test]
     fn test_menu_skips_continue_when_there_is_no_game() {
@@ -58,7 +53,7 @@ mod tests {
     #[test]
     fn test_menu_lands_on_continue_once_a_game_exists() {
         let mut app = app_in_game();
-        app.handle_input(Input::Back); // back to the menu
+        app.handle_input(Input::Back);
 
         app.handle_input(Input::Down);
         assert_eq!(app.selected(), MenuItem::Continue);
@@ -85,13 +80,10 @@ mod tests {
         assert!(!app.has_game());
     }
 
-    // --- Menu actions ---
-
     #[test]
     fn test_confirm_on_new_game_asks_main_for_a_board() {
         let mut app = App::new();
 
-        // Still on the menu until main hands a board back.
         assert_eq!(app.handle_input(Input::Confirm), Request::NewGame);
         assert_eq!(app.screen(), Screen::Menu);
         assert!(!app.has_game());
@@ -100,7 +92,7 @@ mod tests {
     #[test]
     fn test_confirm_on_quit_exits() {
         let mut app = App::new();
-        app.handle_input(Input::Down); // Continue is skipped -> Quit
+        app.handle_input(Input::Down);
 
         assert_eq!(app.handle_input(Input::Confirm), Request::Exit);
     }
@@ -119,8 +111,6 @@ mod tests {
         assert_eq!(app.handle_input(Input::Confirm), Request::NewGame);
         assert_eq!(app.screen(), Screen::Menu);
     }
-
-    // --- Entering and leaving a game ---
 
     #[test]
     fn test_start_game_enters_the_game_screen() {
@@ -146,8 +136,8 @@ mod tests {
         app.handle_input(Input::Down);
         let left_at = app.game().unwrap().cursor;
 
-        app.handle_input(Input::Back); // to the menu
-        app.handle_input(Input::Down); // onto Continue
+        app.handle_input(Input::Back);
+        app.handle_input(Input::Down);
         app.handle_input(Input::Confirm);
 
         assert_eq!(app.screen(), Screen::Game);
@@ -167,8 +157,6 @@ mod tests {
         assert_eq!(app.game().unwrap().cursor, (0, 0));
     }
 
-    // --- Game input still reaches the board ---
-
     #[test]
     fn test_arrows_move_the_cursor_in_a_game() {
         let mut app = app_in_game();
@@ -184,7 +172,7 @@ mod tests {
     fn test_digits_reach_the_board_in_a_game() {
         let mut app = app_in_game();
 
-        app.handle_input(Input::Digit(1)); // (0, 0) is a 1 in the solution
+        app.handle_input(Input::Digit(1));
         assert_eq!(app.game().unwrap().board.cells[0][0], Some(1));
 
         app.handle_input(Input::Erase);
@@ -202,8 +190,6 @@ mod tests {
         app.handle_input(Input::Right);
         assert!(app.game().unwrap().last_error.is_none());
     }
-
-    // --- Rendering ---
 
     #[test]
     fn test_menu_view_marks_the_selection_and_dead_entries() {
