@@ -127,6 +127,9 @@ impl Board {
         if !self.is_editable(row, col) {
             return Err(OpError::NotEditable);
         }
+        if self.cells[row][col].is_some() {
+            return Err(OpError::Occupied);
+        }
         if !self.is_valid_move(row, col, value) {
             return Err(OpError::Conflicts);
         }

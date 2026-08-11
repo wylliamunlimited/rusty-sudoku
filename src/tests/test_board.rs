@@ -434,6 +434,18 @@ mod tests {
     }
 
     #[test]
+    fn test_set_cell_gated_rejects_write_to_occupied_cell() {
+        let puzzle: Puzzle = create_toy_puzzle(None, None);
+        let mut board: Board = Board::from_puzzle(puzzle);
+        board.set_cell(0, 0, 3);
+
+        let result = board.set_cell_gated(0, 0, 3);
+
+        assert!(matches!(result, Err(OpError::Occupied)));
+        assert_eq!(board.cells[0][0], Some(3));
+    }
+
+    #[test]
     fn test_set_cell_gated_rejects_write_to_clue() {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
