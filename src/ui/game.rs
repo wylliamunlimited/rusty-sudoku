@@ -1,4 +1,4 @@
-use crate::board::{Board, OpError};
+use crate::sudoku::{Board, OpError};
 
 use std::time::{Duration, Instant};
 

@@ -1,6 +1,5 @@
-use crate::board::{Board, OpError};
-use crate::grid::Grid;
-use crate::puzzle::Puzzle;
+use crate::sudoku::{Board, OpError};
+use crate::sudoku::{Grid, Puzzle};
 
 #[cfg(test)]
 mod tests {

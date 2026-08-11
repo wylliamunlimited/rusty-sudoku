@@ -1,6 +1,5 @@
-use crate::board::Board;
-use crate::game::{Direction, Game};
-use crate::puzzle::Puzzle;
+use crate::sudoku::{Board, Puzzle};
+use crate::ui::{Direction, Game};
 
 #[cfg(test)]
 mod tests {
