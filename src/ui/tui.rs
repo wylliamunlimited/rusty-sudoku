@@ -50,18 +50,52 @@ impl TerminalGuard {
     }
 
     pub fn draw(&self, app: &App) -> io::Result<()> {
+        let (cols, rows) = terminal::size()?;
+        let view = app.view();
+        let lines: Vec<&str> = view.lines().collect();
+
+        let height = lines.len() as u16;
+        let width = lines.iter().copied().map(display_width).max().unwrap_or(0) as u16;
+
+        let top = rows.saturating_sub(height) / 2;
+        let pad = " ".repeat((cols.saturating_sub(width) / 2) as usize);
+
         let mut out = String::from("\x1B[H");
-        for line in app.view().lines() {
-            out.push_str(line);
-            out.push_str("\x1B[K\r\n");
+        for screen_row in 0..rows {
+            if screen_row > 0 {
+                out.push_str("\r\n");
+            }
+            if let Some(line) = screen_row.checked_sub(top).and_then(|i| lines.get(i as usize)) {
+                out.push_str(&pad);
+                out.push_str(line);
+            }
+            out.push_str("\x1B[K");
         }
-        out.push_str("\x1B[J");
 
         print!("{out}");
         io::stdout().flush()?;
 
         Ok(())
     }
+}
+
+pub(crate) fn display_width(line: &str) -> usize {
+    let mut width = 0;
+    let mut chars = line.chars();
+
+    while let Some(c) = chars.next() {
+        if c == '\x1B' {
+            for esc in chars.by_ref() {
+                if esc.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            width += 1;
+        }
+    }
+
+    width
 }
 
 impl Drop for TerminalGuard {
