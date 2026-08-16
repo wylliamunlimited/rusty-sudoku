@@ -1,14 +1,20 @@
 use crate::ui::{App, Input};
-use crossterm::event::{Event, KeyCode, KeyEventKind, read, EnableMouseCapture, DisableMouseCapture};
+use crossterm::event::{
+    DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseButton, MouseEvent,
+    MouseEventKind, read,
+};
 use crossterm::{
     execute, terminal,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
 };
 
+use std::cell::Cell;
 use std::io;
 use std::io::Write;
 
-pub struct TerminalGuard;
+pub struct TerminalGuard {
+    origin: Cell<(u16, u16)>,
+}
 
 impl TerminalGuard {
     pub fn new() -> io::Result<Self> {
@@ -17,7 +23,9 @@ impl TerminalGuard {
         print!("\x1B[?25l");
         io::stdout().flush()?;
 
-        Ok(TerminalGuard)
+        Ok(TerminalGuard {
+            origin: Cell::new((0, 0)),
+        })
     }
 
     pub fn key_to_input(&self, key: KeyCode) -> Option<Input> {
@@ -40,9 +48,22 @@ impl TerminalGuard {
         }
     }
 
+    pub fn mouse_to_input(&self, event: MouseEvent) -> Option<Input> {
+        if event.kind != MouseEventKind::Down(MouseButton::Left) {
+            return None;
+        }
+
+        let (top, left) = self.origin.get();
+        let row = event.row.checked_sub(top)?;
+        let col = event.column.checked_sub(left)?;
+
+        Some(Input::Click(row, col))
+    }
+
     pub fn read_input(&self) -> io::Result<Option<Input>> {
         let input = match read()? {
             Event::Key(event) if event.kind == KeyEventKind::Press => self.key_to_input(event.code),
+            Event::Mouse(event) => self.mouse_to_input(event),
             _ => None,
         };
 
@@ -58,14 +79,20 @@ impl TerminalGuard {
         let width = lines.iter().copied().map(display_width).max().unwrap_or(0) as u16;
 
         let top = rows.saturating_sub(height) / 2;
-        let pad = " ".repeat((cols.saturating_sub(width) / 2) as usize);
+        let left = cols.saturating_sub(width) / 2;
+        self.origin.set((top, left));
+
+        let pad = " ".repeat(left as usize);
 
         let mut out = String::from("\x1B[H");
         for screen_row in 0..rows {
             if screen_row > 0 {
                 out.push_str("\r\n");
             }
-            if let Some(line) = screen_row.checked_sub(top).and_then(|i| lines.get(i as usize)) {
+            if let Some(line) = screen_row
+                .checked_sub(top)
+                .and_then(|i| lines.get(i as usize))
+            {
                 out.push_str(&pad);
                 out.push_str(line);
             }
