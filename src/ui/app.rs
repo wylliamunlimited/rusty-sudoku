@@ -25,6 +25,7 @@ pub enum Screen {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MenuItem {
     NewGame,
+    Size,
     Continue,
     Quit,
 }
@@ -40,17 +41,24 @@ pub struct App {
     screen: Screen,
     game: Option<Game>,
     selected: MenuItem,
+    box_size: usize,
     logo: Cloud,
     frame: u64,
     last_frame_time: Instant,
 }
 
 impl MenuItem {
-    const ALL: [MenuItem; 3] = [MenuItem::NewGame, MenuItem::Continue, MenuItem::Quit];
+    const ALL: [MenuItem; 4] = [
+        MenuItem::NewGame,
+        MenuItem::Size,
+        MenuItem::Continue,
+        MenuItem::Quit,
+    ];
 
     fn label(self) -> &'static str {
         match self {
             MenuItem::NewGame => "New Game",
+            MenuItem::Size => "Size",
             MenuItem::Continue => "Continue",
             MenuItem::Quit => "Quit",
         }
@@ -60,6 +68,8 @@ impl MenuItem {
 impl App {
     const WIDTH: usize = 37;
     const LOGO_HEIGHT: usize = 8;
+    const BOX_SIZES: [usize; 3] = [2, 3, 4];
+    const DEFAULT_BOX_SIZE: usize = 3;
     const FRAME_INTERVAL: Duration = Duration::from_millis(80);
 
     pub fn new() -> Self {
@@ -67,6 +77,7 @@ impl App {
             screen: Screen::Menu,
             game: None,
             selected: MenuItem::NewGame,
+            box_size: Self::DEFAULT_BOX_SIZE,
             logo: Cloud::cube(14),
             frame: 0,
             last_frame_time: Instant::now(),
@@ -79,6 +90,14 @@ impl App {
 
     pub fn selected(&self) -> MenuItem {
         self.selected
+    }
+
+    pub fn box_size(&self) -> usize {
+        self.box_size
+    }
+
+    pub fn board_size(&self) -> usize {
+        self.box_size * self.box_size
     }
 
     pub fn game(&self) -> Option<&Game> {
@@ -121,8 +140,20 @@ impl App {
                 self.shift_selection(Direction::Down);
                 Request::Continue
             }
+            Input::Left => {
+                self.shift_box_size(Direction::Left);
+                Request::Continue
+            }
+            Input::Right => {
+                self.shift_box_size(Direction::Right);
+                Request::Continue
+            }
             Input::Confirm => match self.selected {
                 MenuItem::NewGame => Request::NewGame,
+                MenuItem::Size => {
+                    self.cycle_box_size();
+                    Request::Continue
+                }
                 MenuItem::Continue => {
                     self.resume();
                     Request::Continue
@@ -176,6 +207,36 @@ impl App {
         MenuItem::ALL[next]
     }
 
+    fn box_size_index(&self) -> usize {
+        Self::BOX_SIZES
+            .iter()
+            .position(|&b| b == self.box_size)
+            .unwrap_or(0)
+    }
+
+    fn shift_box_size(&mut self, op: Direction) {
+        if self.selected != MenuItem::Size {
+            return;
+        }
+        let i = self.box_size_index();
+        let next = match op {
+            Direction::Left => i.saturating_sub(1),
+            Direction::Right => (i + 1).min(Self::BOX_SIZES.len() - 1),
+            _ => i,
+        };
+        self.box_size = Self::BOX_SIZES[next];
+    }
+
+    fn cycle_box_size(&mut self) {
+        let next = (self.box_size_index() + 1) % Self::BOX_SIZES.len();
+        self.box_size = Self::BOX_SIZES[next];
+    }
+
+    fn size_label(&self) -> String {
+        let size = self.board_size();
+        format!("{size}×{size}")
+    }
+
     fn shift_selection(&mut self, op: Direction) {
         let mut candidate = self.step(self.selected, op);
         while !self.is_selectable(candidate) {
@@ -217,13 +278,15 @@ impl App {
         for item in MenuItem::ALL {
             let marker = if item == self.selected { '▸' } else { ' ' };
             out.push_str(&format!("   {marker} {}", item.label()));
-            if !self.is_selectable(item) {
-                out.push_str("  ·  no game in progress");
+            match item {
+                MenuItem::Size => out.push_str(&format!("  ‹ {} ›", self.size_label())),
+                _ if !self.is_selectable(item) => out.push_str("  ·  no game in progress"),
+                _ => {}
             }
             out.push('\n');
         }
 
-        out.push_str("\n↑↓ move · Enter select · q quit\n");
+        out.push_str("\n↑↓ move · ←→ size · Enter select · q quit\n");
         out
     }
 

@@ -79,6 +79,15 @@ impl TerminalGuard {
         let view = app.view();
         let lines: Vec<&str> = view.lines().collect();
 
+        if !fits(&lines, cols, rows) {
+            let notice = too_small_notice(&lines, cols, rows);
+            return self.paint(&notice.lines().collect::<Vec<&str>>(), cols, rows);
+        }
+
+        self.paint(&lines, cols, rows)
+    }
+
+    fn paint(&self, lines: &[&str], cols: u16, rows: u16) -> io::Result<()> {
         let height = lines.len() as u16;
         let width = lines.iter().copied().map(display_width).max().unwrap_or(0) as u16;
 
@@ -108,6 +117,22 @@ impl TerminalGuard {
 
         Ok(())
     }
+}
+
+pub(crate) fn view_size(lines: &[&str]) -> (u16, u16) {
+    let height = lines.len() as u16;
+    let width = lines.iter().copied().map(display_width).max().unwrap_or(0) as u16;
+    (width, height)
+}
+
+pub(crate) fn fits(lines: &[&str], cols: u16, rows: u16) -> bool {
+    let (width, height) = view_size(lines);
+    width <= cols && height <= rows
+}
+
+pub(crate) fn too_small_notice(lines: &[&str], cols: u16, rows: u16) -> String {
+    let (width, height) = view_size(lines);
+    format!("Terminal too small\n\nneeds {width}×{height}\nhas {cols}×{rows}")
 }
 
 pub(crate) fn display_width(line: &str) -> usize {
