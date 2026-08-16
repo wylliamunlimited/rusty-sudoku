@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_generate_solution_valid() {
-        let puzzle: Puzzle = Puzzle::generate(9, 3);
+        let puzzle: Puzzle = Puzzle::generate(3);
         let sol = &puzzle.solution;
 
         assert_eq!(sol.len(), 9);

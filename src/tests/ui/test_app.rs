@@ -15,7 +15,7 @@ mod tests {
     }
 
     fn board() -> Board {
-        Board::from_puzzle(Puzzle::new(solution(), vec![vec![false; 4]; 4]))
+        Board::from_puzzle(Puzzle::new(solution(), vec![vec![false; 4]; 4], 2))
     }
 
     fn app_in_game() -> App {

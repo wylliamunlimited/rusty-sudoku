@@ -15,7 +15,7 @@ mod tests {
     }
 
     fn game_with_mask(mask: Vec<Vec<bool>>) -> Game {
-        Game::new(Board::from_puzzle(Puzzle::new(solution(), mask)))
+        Game::new(Board::from_puzzle(Puzzle::new(solution(), mask, 2)))
     }
 
     fn game_all_editable() -> Game {
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_shift_cursor_moves_normally_without_a_puzzle() {
-        let mut game = Game::new(Board::new(9, 3));
+        let mut game = Game::new(Board::with_box_size(3));
         assert_eq!(game.cursor, (0, 0));
 
         game.shift_cursor(Direction::Right);

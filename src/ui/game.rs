@@ -44,8 +44,23 @@ impl Game {
         if let Some(err) = &self.last_error {
             out.push_str(&format!("\n{err}\n"));
         }
-        out.push_str("\n↑↓←→ move · 1-9 fill · ⌫ clear · Esc menu\n");
+        out.push_str(&format!(
+            "\n↑↓←→ move · {} fill · ⌫ clear · Esc menu\n",
+            self.value_keys()
+        ));
         out
+    }
+
+    fn value_keys(&self) -> String {
+        let size = self.board.size;
+        match size {
+            0 => String::new(),
+            1..=9 => format!("1-{size}"),
+            _ => {
+                let last = char::from_digit(size as u32, 36).unwrap_or('z');
+                format!("1-9,a-{last}")
+            }
+        }
     }
 
     pub fn move_cursor(&mut self, op: Direction) {

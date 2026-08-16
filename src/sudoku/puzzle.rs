@@ -8,20 +8,30 @@ use crate::sudoku::Grid;
 pub struct Puzzle {
     pub(crate) solution: Vec<Vec<i32>>,
     pub(crate) mask: Vec<Vec<bool>>,
+    pub(crate) box_size: usize,
 }
 
 impl Puzzle {
-    pub fn new(solution: Vec<Vec<i32>>, mask: Vec<Vec<bool>>) -> Self {
-        Puzzle { solution, mask }
+    pub fn new(solution: Vec<Vec<i32>>, mask: Vec<Vec<bool>>, box_size: usize) -> Self {
+        Puzzle {
+            solution,
+            mask,
+            box_size,
+        }
     }
 
-    pub fn generate(size: usize, box_size: usize) -> Self {
+    pub fn generate(box_size: usize) -> Self {
+        let size = box_size * box_size;
         let mut rng = rand::rng();
 
         let solution = Self::seed(size, box_size, &mut rng);
         let mask = Self::mask(size, &mut rng);
 
-        Puzzle { solution, mask }
+        Puzzle {
+            solution,
+            mask,
+            box_size,
+        }
     }
 
     pub fn seed(size: usize, box_size: usize, rng: &mut ThreadRng) -> Vec<Vec<i32>> {
@@ -121,15 +131,16 @@ impl Grid for Puzzle {
         self.solution.len()
     }
     fn box_size(&self) -> usize {
-        (self.solution.len() as f64).sqrt() as usize
+        self.box_size
     }
     fn cell_str(&self, row: usize, col: usize) -> String {
+        let width = self.cell_width();
         match self.mask[row][col] {
             true => match self.solution[row][col] {
-                0 => String::from("   "),
-                _ => format!(" {} ", self.solution[row][col]),
+                0 => " ".repeat(width),
+                n => format!("{n:^width$}"),
             },
-            false => String::from(" x "),
+            false => format!("{:^width$}", 'x'),
         }
     }
 }

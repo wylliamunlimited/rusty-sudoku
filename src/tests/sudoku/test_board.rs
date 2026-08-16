@@ -8,7 +8,7 @@ mod tests {
     fn board_with(cells: Vec<Vec<Option<i32>>>) -> Board {
         Board {
             cells,
-            ..Board::new(9, 3)
+            ..Board::with_box_size(3)
         }
     }
 
@@ -30,9 +30,23 @@ mod tests {
     }
 
     fn create_toy_puzzle(solution: Option<Vec<Vec<i32>>>, mask: Option<Vec<Vec<bool>>>) -> Puzzle {
-        let solution = solution.unwrap_or_else(|| vec![vec![3, 2], vec![5, 4]]);
-        let mask = mask.unwrap_or_else(|| vec![vec![false, true], vec![true, false]]);
-        Puzzle::new(solution, mask)
+        let solution = solution.unwrap_or_else(|| {
+            vec![
+                vec![1, 2, 3, 4],
+                vec![3, 4, 1, 2],
+                vec![2, 1, 4, 3],
+                vec![4, 3, 2, 1],
+            ]
+        });
+        let mask = mask.unwrap_or_else(|| {
+            vec![
+                vec![false, true, false, false],
+                vec![true, false, false, false],
+                vec![false, false, false, false],
+                vec![false, false, false, false],
+            ]
+        });
+        Puzzle::new(solution, mask, 2)
     }
 
     #[test]
@@ -40,6 +54,7 @@ mod tests {
         let puzzle = Puzzle {
             solution: vec![vec![1, 2], vec![3, 4]],
             mask: vec![vec![true, false], vec![false, true]],
+            box_size: 2,
         };
 
         let board = Board::from_puzzle(puzzle);
@@ -228,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_board_new() {
-        let board = Board::new(9, 3);
+        let board = Board::with_box_size(3);
 
         for r in 0..board.size {
             for c in 0..board.size {
@@ -239,7 +254,7 @@ mod tests {
 
     #[test]
     fn test_board_render() {
-        let board = Board::new(9, 3);
+        let board = Board::with_box_size(3);
 
         let rendered_board: String = board.render((3, 3), false);
 
@@ -270,7 +285,7 @@ mod tests {
 
     #[test]
     fn test_board_render_with_blink() {
-        let board = Board::new(9, 3);
+        let board = Board::with_box_size(3);
 
         let rendered_board: String = board.render((3, 3), true);
 
@@ -300,7 +315,7 @@ mod tests {
 
     #[test]
     fn test_set_cell() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
 
         board.set_cell(3, 3, 5);
 
@@ -309,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_clear_cell() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
 
         board.set_cell(3, 3, 5);
         board.set_cell(3, 8, 3);
@@ -360,7 +375,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_move_filled() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
         board.set_cell(5, 0, 7);
 
         assert!(!board.is_valid_move(5, 0, 2));
@@ -368,7 +383,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_move_row_conflict() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
         board.set_cell(5, 0, 7);
 
         assert!(!board.is_valid_move(5, 5, 7));
@@ -376,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_move_column_conflict() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
         board.set_cell(5, 0, 7);
 
         assert!(!board.is_valid_move(0, 0, 7));
@@ -384,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_move_box_conflict() {
-        let mut board = Board::new(9, 3);
+        let mut board = Board::with_box_size(3);
         board.set_cell(1, 1, 5);
 
         assert!(!board.is_valid_move(0, 0, 5));
@@ -395,8 +410,8 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let board: Board = Board::from_puzzle(puzzle);
 
-        assert!(board.is_correct_move(0, 0, 3));
-        assert!(!board.is_correct_move(1, 1, 3));
+        assert!(board.is_correct_move(0, 0, 1));
+        assert!(!board.is_correct_move(1, 1, 1));
     }
 
     #[test]
@@ -415,8 +430,8 @@ mod tests {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
 
-        assert!(board.set_cell_gated(0, 0, 3).is_ok());
-        assert_eq!(board.cells[0][0], Some(3));
+        assert!(board.set_cell_gated(0, 0, 1).is_ok());
+        assert_eq!(board.cells[0][0], Some(1));
     }
 
     #[test]
@@ -434,12 +449,12 @@ mod tests {
     fn test_set_cell_gated_rejects_write_to_occupied_cell() {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
-        board.set_cell(0, 0, 3);
+        board.set_cell(0, 0, 1);
 
-        let result = board.set_cell_gated(0, 0, 3);
+        let result = board.set_cell_gated(0, 0, 1);
 
         assert!(matches!(result, Err(OpError::Occupied)));
-        assert_eq!(board.cells[0][0], Some(3));
+        assert_eq!(board.cells[0][0], Some(1));
     }
 
     #[test]
@@ -457,7 +472,7 @@ mod tests {
     fn test_clear_cell_gated_clears_editable_cell() {
         let puzzle: Puzzle = create_toy_puzzle(None, None);
         let mut board: Board = Board::from_puzzle(puzzle);
-        board.set_cell(0, 0, 3);
+        board.set_cell(0, 0, 1);
 
         assert!(board.clear_cell_gated(0, 0).is_ok());
         assert_eq!(board.cells[0][0], None);

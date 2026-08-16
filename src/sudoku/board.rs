@@ -11,6 +11,7 @@ pub struct Board {
 }
 
 pub enum OpError {
+    OutOfRange,
     NotEditable,
     Occupied,
     Conflicts,
@@ -20,7 +21,7 @@ pub enum OpError {
 impl Board {
     pub fn from_puzzle(puzzle: Puzzle) -> Self {
         let size = puzzle.size();
-        let box_size = (puzzle.size() as f64).sqrt() as usize;
+        let box_size = puzzle.box_size;
         let cells: Vec<Vec<Option<i32>>> = puzzle
             .mask
             .iter()
@@ -41,7 +42,8 @@ impl Board {
         }
     }
 
-    pub fn new(size: usize, box_size: usize) -> Self {
+    pub fn with_box_size(box_size: usize) -> Self {
+        let size = box_size * box_size;
         Board {
             size,
             box_size,
@@ -119,7 +121,14 @@ impl Board {
         self.cells[row][col] = Some(value);
     }
 
+    pub fn in_range(&self, value: i32) -> bool {
+        (1..=self.size as i32).contains(&value)
+    }
+
     pub fn set_cell_gated(&mut self, row: usize, col: usize, value: i32) -> Result<(), OpError> {
+        if !self.in_range(value) {
+            return Err(OpError::OutOfRange);
+        }
         if !self.is_editable(row, col) {
             return Err(OpError::NotEditable);
         }
@@ -167,9 +176,10 @@ impl Grid for Board {
         self.box_size
     }
     fn cell_str(&self, row: usize, col: usize) -> String {
+        let width = self.cell_width();
         match self.cells[row][col] {
-            None => String::from("   "),
-            Some(n) => format!(" {n} "),
+            None => " ".repeat(width),
+            Some(n) => format!("{n:^width$}"),
         }
     }
 }
@@ -183,6 +193,7 @@ impl fmt::Display for Board {
 impl fmt::Display for OpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match self {
+            OpError::OutOfRange => "That number is outside the range this board uses.",
             OpError::NotEditable => "That cell is part of the puzzle and can't be changed.",
             OpError::Occupied => "That cell already has a number in it.",
             OpError::Conflicts => "That number already appears in this row, column, or box.",
