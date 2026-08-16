@@ -13,6 +13,7 @@ pub enum Input {
     Erase,
     Confirm,
     Back,
+    Click(u16, u16),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -151,6 +152,7 @@ impl App {
             Input::Right => game.move_cursor(Direction::Right),
             Input::Digit(val) => game.set_current_cell(val),
             Input::Erase => game.clear_current_cell(),
+            Input::Click(_, _) => {}
             Input::Confirm | Input::Back => {}
         }
 
