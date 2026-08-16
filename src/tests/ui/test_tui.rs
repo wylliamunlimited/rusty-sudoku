@@ -1,5 +1,7 @@
 use crate::sudoku::{Board, Puzzle};
 use crate::ui::tui::display_width;
+use crate::ui::{Input, TerminalGuard};
+use crossterm::event::KeyCode;
 
 #[cfg(test)]
 mod tests {
@@ -45,5 +47,41 @@ mod tests {
         };
 
         assert_eq!(widest(false), widest(true));
+    }
+
+    fn press(c: char) -> Option<Input> {
+        TerminalGuard::key_to_input(KeyCode::Char(c))
+    }
+
+    #[test]
+    fn test_digits_one_through_nine_map_to_their_value() {
+        for (i, c) in "123456789".chars().enumerate() {
+            assert_eq!(press(c), Some(Input::Digit(i as i32 + 1)), "key {c}");
+        }
+    }
+
+    #[test]
+    fn test_letters_a_through_g_map_to_ten_through_sixteen() {
+        for (i, c) in "abcdefg".chars().enumerate() {
+            assert_eq!(press(c), Some(Input::Digit(i as i32 + 10)), "key {c}");
+        }
+    }
+
+    #[test]
+    fn test_zero_erases_rather_than_entering_a_value() {
+        assert_eq!(press('0'), Some(Input::Erase));
+    }
+
+    #[test]
+    fn test_q_still_quits_and_is_not_read_as_a_value() {
+        assert_eq!(press('q'), Some(Input::Back));
+        assert_eq!(TerminalGuard::key_to_input(KeyCode::Esc), Some(Input::Back));
+    }
+
+    #[test]
+    fn test_letters_past_g_are_ignored() {
+        for c in "hijkxyz".chars() {
+            assert_eq!(press(c), None, "key {c}");
+        }
     }
 }

@@ -128,4 +128,81 @@ mod tests {
 
         assert_eq!(lines.len(), 1 + board.size() * 2);
     }
+
+    fn filled(box_size: usize) -> Board {
+        let mut board = Board::with_box_size(box_size);
+        for row in 0..board.size() {
+            for col in 0..board.size() {
+                board.set_cell(row, col, (col + 1) as i32);
+            }
+        }
+        board
+    }
+
+    #[test]
+    fn test_cell_width_grows_with_the_number_of_digits() {
+        assert_eq!(Board::with_box_size(2).cell_width(), 3);
+        assert_eq!(Board::with_box_size(3).cell_width(), 3);
+        assert_eq!(Board::with_box_size(4).cell_width(), 4);
+    }
+
+    #[test]
+    fn test_every_line_has_one_width_at_every_board_size() {
+        for box_size in [2, 3, 4] {
+            let board = filled(box_size);
+            let render = board.render((0, 0), false);
+            let expected = 1 + board.size() * (board.cell_width() + 1);
+
+            for line in render.lines() {
+                assert_eq!(
+                    display_width(line),
+                    expected,
+                    "box_size {box_size}: {line:?}"
+                );
+            }
+            assert_eq!(render.lines().count(), 1 + board.size() * 2);
+        }
+    }
+
+    #[test]
+    fn test_double_digit_values_keep_the_grid_aligned() {
+        let board = filled(4);
+        let render = board.render((0, 0), false);
+        let widths: Vec<usize> = render.lines().map(display_width).collect();
+
+        assert!(render.contains("16"));
+        assert!(widths.windows(2).all(|w| w[0] == w[1]));
+    }
+
+    #[test]
+    fn test_cell_at_inverts_the_layout_at_every_board_size() {
+        for box_size in [2, 3, 4] {
+            let board = Board::with_box_size(box_size);
+            let stride = board.cell_width() + 1;
+
+            for row in 0..board.size() {
+                for col in 0..board.size() {
+                    let line = 1 + row * 2;
+                    let first = 1 + col * stride;
+                    for offset in 0..board.cell_width() {
+                        assert_eq!(
+                            board.cell_at(line, first + offset),
+                            Some((row, col)),
+                            "box_size {box_size}"
+                        );
+                    }
+                    assert_eq!(board.cell_at(line, first - 1), None, "box_size {box_size}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_cell_at_rejects_the_right_border_at_every_board_size() {
+        for box_size in [2, 3, 4] {
+            let board = Board::with_box_size(box_size);
+            let last = board.size() * (board.cell_width() + 1);
+            assert_eq!(board.cell_at(1, last), None, "box_size {box_size}");
+        }
+    }
 }

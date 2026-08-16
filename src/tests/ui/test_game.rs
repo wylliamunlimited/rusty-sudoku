@@ -232,4 +232,33 @@ mod tests {
         let game = game_with_mask(vec![vec![true; 4]; 4]);
         assert_eq!(game.cursor, (0, 0));
     }
+
+    #[test]
+    fn test_hint_line_lists_the_keys_for_this_board_size() {
+        let four = Game::new(Board::from_puzzle(Puzzle::new(
+            solution(),
+            vec![vec![false; 4]; 4],
+            2,
+        )));
+        assert!(four.view().contains("1-4 fill"), "{}", four.view());
+
+        let nine = Game::new(Board::with_box_size(3));
+        assert!(nine.view().contains("1-9 fill"), "{}", nine.view());
+
+        let sixteen = Game::new(Board::with_box_size(4));
+        assert!(
+            sixteen.view().contains("1-9,a-g fill"),
+            "{}",
+            sixteen.view()
+        );
+    }
+
+    #[test]
+    fn test_click_reaches_the_last_cell_of_a_sixteen_board() {
+        let mut game = Game::new(Board::with_box_size(4));
+        let stride = 4 + 1;
+
+        game.click(1 + 15 * 2, 1 + 15 * stride);
+        assert_eq!(game.cursor, (15, 15));
+    }
 }
