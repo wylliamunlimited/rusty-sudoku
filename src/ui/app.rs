@@ -152,7 +152,7 @@ impl App {
             Input::Right => game.move_cursor(Direction::Right),
             Input::Digit(val) => game.set_current_cell(val),
             Input::Erase => game.clear_current_cell(),
-            Input::Click(_, _) => {}
+            Input::Click(line, column) => game.click(line as usize, column as usize),
             Input::Confirm | Input::Back => {}
         }
 

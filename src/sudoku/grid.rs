@@ -1,3 +1,5 @@
+pub(crate) const CELL_WIDTH: usize = 3;
+
 pub struct BorderStyle {
     pub(crate) left: char,
     pub(crate) fill: &'static str,
@@ -117,6 +119,24 @@ pub trait Grid {
 
         output.push('\n');
         output
+    }
+
+    fn cell_at(&self, line: usize, column: usize) -> Option<(usize, usize)> {
+        let stride = CELL_WIDTH + 1;
+
+        let line_slot = line.checked_sub(1)?;
+        if !line_slot.is_multiple_of(2) {
+            return None;
+        }
+        let row = line_slot / 2;
+
+        let column_slot = column.checked_sub(1)?;
+        if column_slot % stride == CELL_WIDTH {
+            return None;
+        }
+        let col = column_slot / stride;
+
+        (row < self.size() && col < self.size()).then_some((row, col))
     }
 
     fn render_grid(&self, highlight: Option<(usize, usize)>) -> String {
