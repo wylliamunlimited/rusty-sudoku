@@ -1,4 +1,4 @@
-use crate::sudoku::{Board, OpError};
+use crate::sudoku::{Board, Grid, OpError};
 
 use std::time::{Duration, Instant};
 
@@ -51,6 +51,17 @@ impl Game {
     pub fn move_cursor(&mut self, op: Direction) {
         self.last_error = None;
         self.shift_cursor(op);
+    }
+
+    pub fn click(&mut self, line: usize, column: usize) {
+        let Some((row, col)) = self.board.cell_at(line, column) else {
+            return;
+        };
+        if !self.board.is_editable(row, col) {
+            return;
+        }
+        self.last_error = None;
+        self.cursor = (row, col);
     }
 
     fn step(&self, (r, c): (usize, usize), op: Direction) -> (usize, usize) {
