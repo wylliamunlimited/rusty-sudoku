@@ -6,7 +6,6 @@ use rusty_sudoku::ui::{App, Request, TerminalGuard};
 use std::io;
 use std::time::Duration;
 
-const BOX_SIZE: usize = 3;
 const POLL_INTERVAL: Duration = Duration::from_millis(40);
 
 fn main() -> io::Result<()> {
@@ -23,7 +22,7 @@ fn main() -> io::Result<()> {
             match app.handle_input(input) {
                 Request::Continue => {}
                 Request::NewGame => {
-                    let puzzle: Puzzle = Puzzle::generate(BOX_SIZE);
+                    let puzzle: Puzzle = Puzzle::generate(app.box_size());
                     app.start_game(Board::from_puzzle(puzzle));
                 }
                 Request::Exit => break,
