@@ -1,5 +1,5 @@
 use crate::sudoku::{Board, Puzzle};
-use crate::ui::tui::display_width;
+use crate::ui::tui::{display_width, fits, too_small_notice};
 use crate::ui::{Input, TerminalGuard};
 use crossterm::event::KeyCode;
 
@@ -83,5 +83,43 @@ mod tests {
         for c in "hijkxyz".chars() {
             assert_eq!(press(c), None, "key {c}");
         }
+    }
+
+    #[test]
+    fn test_fits_accepts_a_view_that_matches_the_terminal_exactly() {
+        let lines = vec!["abcde", "fghij"];
+        assert!(fits(&lines, 5, 2));
+    }
+
+    #[test]
+    fn test_fits_rejects_a_view_wider_or_taller_than_the_terminal() {
+        let lines = vec!["abcde", "fghij"];
+        assert!(!fits(&lines, 4, 2));
+        assert!(!fits(&lines, 5, 1));
+    }
+
+    #[test]
+    fn test_fits_measures_display_width_not_byte_length() {
+        let lines = vec!["\x1B[7m 5 \x1B[0m"];
+        assert!(fits(&lines, 3, 1));
+    }
+
+    #[test]
+    fn test_a_sixteen_board_does_not_fit_a_standard_terminal() {
+        let board = Board::with_box_size(4);
+        let render = board.render((0, 0), false);
+        let lines: Vec<&str> = render.lines().collect();
+
+        assert!(!fits(&lines, 80, 24));
+        assert!(fits(&lines, 100, 40));
+    }
+
+    #[test]
+    fn test_too_small_notice_reports_both_dimensions() {
+        let lines = vec!["abcde", "fghij"];
+        let notice = too_small_notice(&lines, 4, 1);
+
+        assert!(notice.contains("5×2"));
+        assert!(notice.contains("4×1"));
     }
 }
