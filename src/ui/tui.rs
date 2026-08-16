@@ -1,5 +1,5 @@
 use crate::ui::{App, Input};
-use crossterm::event::{Event, KeyCode, KeyEventKind, read};
+use crossterm::event::{Event, KeyCode, KeyEventKind, read, EnableMouseCapture, DisableMouseCapture};
 use crossterm::{
     execute, terminal,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
@@ -12,7 +12,7 @@ pub struct TerminalGuard;
 
 impl TerminalGuard {
     pub fn new() -> io::Result<Self> {
-        execute!(io::stdout(), EnterAlternateScreen)?;
+        execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture)?;
         terminal::enable_raw_mode()?;
         print!("\x1B[?25l");
         io::stdout().flush()?;
@@ -102,6 +102,6 @@ impl Drop for TerminalGuard {
     fn drop(&mut self) {
         let _ = io::stdout().write_all(b"\x1B[?25h");
         let _ = terminal::disable_raw_mode();
-        let _ = execute!(io::stdout(), LeaveAlternateScreen);
+        let _ = execute!(io::stdout(), DisableMouseCapture, LeaveAlternateScreen);
     }
 }
