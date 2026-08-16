@@ -129,6 +129,92 @@ mod tests {
         assert_eq!(game.cursor, (1, 1));
     }
 
+    fn cell_line(row: usize) -> usize {
+        1 + row * 2
+    }
+
+    fn cell_column(col: usize) -> usize {
+        1 + col * 4
+    }
+
+    #[test]
+    fn test_click_moves_the_cursor_to_the_clicked_cell() {
+        let mut game = game_all_editable();
+        game.cursor = (0, 0);
+
+        game.click(cell_line(2), cell_column(3));
+        assert_eq!(game.cursor, (2, 3));
+    }
+
+    #[test]
+    fn test_click_lands_anywhere_within_the_cell() {
+        let mut game = game_all_editable();
+
+        for offset in 0..3 {
+            game.cursor = (0, 0);
+            game.click(cell_line(1), cell_column(2) + offset);
+            assert_eq!(game.cursor, (1, 2), "offset {offset}");
+        }
+    }
+
+    #[test]
+    fn test_click_on_a_border_is_ignored() {
+        let mut game = game_all_editable();
+        game.cursor = (1, 1);
+
+        game.click(0, cell_column(2));
+        assert_eq!(game.cursor, (1, 1));
+
+        game.click(cell_line(2), 0);
+        assert_eq!(game.cursor, (1, 1));
+
+        game.click(cell_line(2), cell_column(2) + 3);
+        assert_eq!(game.cursor, (1, 1));
+    }
+
+    #[test]
+    fn test_click_outside_the_board_is_ignored() {
+        let mut game = game_all_editable();
+        game.cursor = (1, 1);
+
+        game.click(cell_line(4), cell_column(0));
+        assert_eq!(game.cursor, (1, 1));
+
+        game.click(cell_line(0), cell_column(4));
+        assert_eq!(game.cursor, (1, 1));
+    }
+
+    #[test]
+    fn test_click_on_a_clue_is_ignored() {
+        let mut game = game_with_mask(mask_with_row(0, vec![false, true, false, false]));
+        game.cursor = (0, 0);
+
+        game.click(cell_line(0), cell_column(1));
+        assert_eq!(game.cursor, (0, 0));
+    }
+
+    #[test]
+    fn test_click_clears_the_last_error() {
+        let mut game = game_all_editable();
+        game.cursor = (0, 0);
+        game.set_current_cell(9);
+        assert!(game.last_error.is_some());
+
+        game.click(cell_line(1), cell_column(1));
+        assert!(game.last_error.is_none());
+    }
+
+    #[test]
+    fn test_ignored_click_keeps_the_last_error() {
+        let mut game = game_all_editable();
+        game.cursor = (0, 0);
+        game.set_current_cell(9);
+        assert!(game.last_error.is_some());
+
+        game.click(0, cell_column(1));
+        assert!(game.last_error.is_some());
+    }
+
     #[test]
     fn test_new_starts_on_first_editable_cell() {
         let game = game_with_mask(mask_with_row(0, vec![true, true, false, false]));
