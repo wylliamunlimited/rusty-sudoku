@@ -1,4 +1,3 @@
-use crate::sudoku::grid::CELL_WIDTH;
 use crate::sudoku::{Board, Grid};
 use crate::ui::tui::display_width;
 
@@ -6,14 +5,20 @@ use crate::ui::tui::display_width;
 mod tests {
     use super::*;
 
-    const STRIDE: usize = CELL_WIDTH + 1;
-
     fn board() -> Board {
-        Board::new(9, 3)
+        Board::with_box_size(3)
+    }
+
+    fn cell_width() -> usize {
+        board().cell_width()
+    }
+
+    fn stride() -> usize {
+        cell_width() + 1
     }
 
     fn first_column_of(col: usize) -> usize {
-        1 + col * STRIDE
+        1 + col * stride()
     }
 
     fn line_of(row: usize) -> usize {
@@ -87,7 +92,7 @@ mod tests {
         for row in 0..board.size() {
             for col in 0..board.size() {
                 let line = line_of(row);
-                for offset in 0..CELL_WIDTH {
+                for offset in 0..cell_width() {
                     let column = first_column_of(col) + offset;
                     assert_eq!(
                         board.cell_at(line, column),
@@ -116,7 +121,7 @@ mod tests {
         let rendered = board.render((0, 0), false);
         let lines: Vec<&str> = rendered.lines().collect();
 
-        let expected_width = 1 + board.size() * STRIDE;
+        let expected_width = 1 + board.size() * stride();
         for line in &lines {
             assert_eq!(display_width(line), expected_width);
         }

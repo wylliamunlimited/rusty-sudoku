@@ -1,8 +1,6 @@
-pub(crate) const CELL_WIDTH: usize = 3;
-
 pub struct BorderStyle {
     pub(crate) left: char,
-    pub(crate) fill: &'static str,
+    pub(crate) fill: char,
     pub(crate) cell: char,
     pub(crate) box_junction: char,
     pub(crate) right: char,
@@ -11,7 +9,7 @@ pub struct BorderStyle {
 impl BorderStyle {
     pub(crate) const TOP: BorderStyle = BorderStyle {
         left: '╔',
-        fill: "═══",
+        fill: '═',
         cell: '╤',
         box_junction: '╦',
         right: '╗',
@@ -19,7 +17,7 @@ impl BorderStyle {
 
     pub(crate) const BOTTOM: BorderStyle = BorderStyle {
         left: '╚',
-        fill: "═══",
+        fill: '═',
         cell: '╧',
         box_junction: '╩',
         right: '╝',
@@ -27,7 +25,7 @@ impl BorderStyle {
 
     pub(crate) const THICK: BorderStyle = BorderStyle {
         left: '╠',
-        fill: "═══",
+        fill: '═',
         cell: '╪',
         box_junction: '╬',
         right: '╣',
@@ -35,7 +33,7 @@ impl BorderStyle {
 
     pub(crate) const THIN: BorderStyle = BorderStyle {
         left: '╟',
-        fill: "───",
+        fill: '─',
         cell: '┼',
         box_junction: '╫',
         right: '╢',
@@ -47,13 +45,19 @@ pub trait Grid {
     fn box_size(&self) -> usize;
     fn cell_str(&self, row: usize, col: usize) -> String;
 
+    fn cell_width(&self) -> usize {
+        self.size().to_string().len() + 2
+    }
+
     fn border(&self, style: &BorderStyle) -> String {
         let mut output = String::new();
 
         output.push(style.left);
 
         for i in 0..self.size() {
-            output.push_str(style.fill);
+            for _ in 0..self.cell_width() {
+                output.push(style.fill);
+            }
 
             if i == self.size() - 1 {
                 output.push(style.right);
@@ -122,7 +126,8 @@ pub trait Grid {
     }
 
     fn cell_at(&self, line: usize, column: usize) -> Option<(usize, usize)> {
-        let stride = CELL_WIDTH + 1;
+        let cell_width = self.cell_width();
+        let stride = cell_width + 1;
 
         let line_slot = line.checked_sub(1)?;
         if !line_slot.is_multiple_of(2) {
@@ -131,7 +136,7 @@ pub trait Grid {
         let row = line_slot / 2;
 
         let column_slot = column.checked_sub(1)?;
-        if column_slot % stride == CELL_WIDTH {
+        if column_slot % stride == cell_width {
             return None;
         }
         let col = column_slot / stride;

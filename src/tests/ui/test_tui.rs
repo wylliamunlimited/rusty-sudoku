@@ -33,7 +33,7 @@ mod tests {
 
     #[test]
     fn test_board_width_is_unchanged_by_the_cursor_highlight() {
-        let board = Board::from_puzzle(Puzzle::generate(9, 3));
+        let board = Board::from_puzzle(Puzzle::generate(3));
 
         let widest = |blink: bool| {
             board

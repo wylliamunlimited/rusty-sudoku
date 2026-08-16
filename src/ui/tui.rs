@@ -12,6 +12,8 @@ use std::cell::Cell;
 use std::io;
 use std::io::Write;
 
+const MAX_VALUE_RADIX: u32 = 17;
+
 pub struct TerminalGuard {
     origin: Cell<(u16, u16)>,
 }
@@ -28,21 +30,21 @@ impl TerminalGuard {
         })
     }
 
-    pub fn key_to_input(&self, key: KeyCode) -> Option<Input> {
+    pub fn key_to_input(key: KeyCode) -> Option<Input> {
         match key {
             KeyCode::Left => Some(Input::Left),
             KeyCode::Right => Some(Input::Right),
             KeyCode::Up => Some(Input::Up),
             KeyCode::Down => Some(Input::Down),
 
-            KeyCode::Backspace | KeyCode::Delete | KeyCode::Char('0') => Some(Input::Erase),
-            KeyCode::Char(c @ '1'..='9') => {
-                let digit = c.to_digit(10).unwrap() as i32;
-                Some(Input::Digit(digit))
-            }
-
             KeyCode::Enter => Some(Input::Confirm),
             KeyCode::Esc | KeyCode::Char('q') => Some(Input::Back),
+
+            KeyCode::Backspace | KeyCode::Delete | KeyCode::Char('0') => Some(Input::Erase),
+            KeyCode::Char(c) => c
+                .to_digit(MAX_VALUE_RADIX)
+                .filter(|&d| d > 0)
+                .map(|d| Input::Digit(d as i32)),
 
             _ => None,
         }
@@ -62,7 +64,9 @@ impl TerminalGuard {
 
     pub fn read_input(&self) -> io::Result<Option<Input>> {
         let input = match read()? {
-            Event::Key(event) if event.kind == KeyEventKind::Press => self.key_to_input(event.code),
+            Event::Key(event) if event.kind == KeyEventKind::Press => {
+                Self::key_to_input(event.code)
+            }
             Event::Mouse(event) => self.mouse_to_input(event),
             _ => None,
         };
