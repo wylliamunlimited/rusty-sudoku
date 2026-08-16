@@ -488,4 +488,91 @@ mod tests {
         assert!(matches!(result, Err(OpError::NotEditable)));
         assert_eq!(board.cells[0][1], Some(2));
     }
+
+    #[test]
+    fn test_in_range_tracks_the_board_size() {
+        let small = Board::with_box_size(2);
+        assert!(small.in_range(1));
+        assert!(small.in_range(4));
+        assert!(!small.in_range(5));
+        assert!(!small.in_range(0));
+
+        let large = Board::with_box_size(4);
+        assert!(large.in_range(16));
+        assert!(!large.in_range(17));
+    }
+
+    #[test]
+    fn test_set_cell_gated_rejects_a_value_above_the_board_size() {
+        let mut board = Board::with_box_size(2);
+
+        let result = board.set_cell_gated(0, 0, 9);
+
+        assert!(matches!(result, Err(OpError::OutOfRange)));
+        assert_eq!(board.cells[0][0], None);
+    }
+
+    fn pattern_solution(box_size: usize) -> Vec<Vec<i32>> {
+        let size = box_size * box_size;
+        (0..size)
+            .map(|r| {
+                (0..size)
+                    .map(|c| (((r * box_size + r / box_size + c) % size) + 1) as i32)
+                    .collect()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn test_set_cell_gated_accepts_a_double_digit_value_on_a_sixteen_board() {
+        let solution = pattern_solution(4);
+        let target = (0..16)
+            .flat_map(|r| (0..16).map(move |c| (r, c)))
+            .find(|&(r, c)| solution[r][c] > 9)
+            .expect("the 16x16 pattern contains double-digit values");
+        let (row, col) = target;
+        let expected = solution[row][col];
+
+        let puzzle = Puzzle::new(solution, vec![vec![false; 16]; 16], 4);
+        let mut board = Board::from_puzzle(puzzle);
+
+        assert!(board.set_cell_gated(row, col, expected).is_ok());
+        assert_eq!(board.cells[row][col], Some(expected));
+    }
+
+    #[test]
+    fn test_pattern_solution_is_a_legal_board_at_every_size() {
+        for box_size in [2, 3, 4] {
+            let size = box_size * box_size;
+            let solution = pattern_solution(box_size);
+            for row in 0..size {
+                for col in 0..size {
+                    assert!(
+                        Puzzle::validate(&solution, row, col, box_size),
+                        "box_size {box_size} at ({row}, {col})"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_with_box_size_derives_a_square_board() {
+        for box_size in [2, 3, 4] {
+            let board = Board::with_box_size(box_size);
+            assert_eq!(board.size, box_size * box_size);
+            assert_eq!(board.box_size, box_size);
+            assert_eq!(board.cells.len(), board.size);
+            assert!(board.cells.iter().all(|r| r.len() == board.size));
+        }
+    }
+
+    #[test]
+    fn test_from_puzzle_carries_the_generated_box_size() {
+        for box_size in [2, 3] {
+            let board = Board::from_puzzle(Puzzle::generate(box_size));
+            assert_eq!(board.box_size, box_size);
+            assert_eq!(board.size, box_size * box_size);
+        }
+    }
 }
