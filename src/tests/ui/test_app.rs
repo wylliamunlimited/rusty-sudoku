@@ -38,6 +38,9 @@ mod tests {
         let mut app = App::new();
 
         app.handle_input(Input::Down);
+        assert_eq!(app.selected(), MenuItem::Size);
+
+        app.handle_input(Input::Down);
         assert_eq!(app.selected(), MenuItem::Quit);
     }
 
@@ -55,6 +58,7 @@ mod tests {
         let mut app = app_in_game();
         app.handle_input(Input::Back);
 
+        app.handle_input(Input::Down);
         app.handle_input(Input::Down);
         assert_eq!(app.selected(), MenuItem::Continue);
     }
@@ -92,6 +96,7 @@ mod tests {
     #[test]
     fn test_confirm_on_quit_exits() {
         let mut app = App::new();
+        app.handle_input(Input::Down);
         app.handle_input(Input::Down);
 
         assert_eq!(app.handle_input(Input::Confirm), Request::Exit);
@@ -137,6 +142,7 @@ mod tests {
         let left_at = app.game().unwrap().cursor;
 
         app.handle_input(Input::Back);
+        app.handle_input(Input::Down);
         app.handle_input(Input::Down);
         app.handle_input(Input::Confirm);
 
@@ -207,5 +213,114 @@ mod tests {
 
         assert!(!view.contains("RUSTY SUDOKU"));
         assert!(view.contains('║'));
+    }
+
+    fn app_on_size_row() -> App {
+        let mut app = App::new();
+        app.handle_input(Input::Down);
+        assert_eq!(app.selected(), MenuItem::Size);
+        app
+    }
+
+    #[test]
+    fn test_menu_defaults_to_a_nine_by_nine_board() {
+        let app = App::new();
+
+        assert_eq!(app.box_size(), 3);
+        assert_eq!(app.board_size(), 9);
+    }
+
+    #[test]
+    fn test_right_on_the_size_row_grows_the_board() {
+        let mut app = app_on_size_row();
+
+        app.handle_input(Input::Right);
+        assert_eq!(app.board_size(), 16);
+    }
+
+    #[test]
+    fn test_left_on_the_size_row_shrinks_the_board() {
+        let mut app = app_on_size_row();
+
+        app.handle_input(Input::Left);
+        assert_eq!(app.board_size(), 4);
+    }
+
+    #[test]
+    fn test_size_row_clamps_at_both_ends() {
+        let mut app = app_on_size_row();
+
+        for _ in 0..5 {
+            app.handle_input(Input::Right);
+        }
+        assert_eq!(app.board_size(), 16);
+
+        for _ in 0..5 {
+            app.handle_input(Input::Left);
+        }
+        assert_eq!(app.board_size(), 4);
+    }
+
+    #[test]
+    fn test_size_only_changes_while_the_size_row_is_selected() {
+        let mut app = App::new();
+        assert_eq!(app.selected(), MenuItem::NewGame);
+
+        app.handle_input(Input::Right);
+        assert_eq!(app.board_size(), 9);
+
+        app.handle_input(Input::Left);
+        assert_eq!(app.board_size(), 9);
+
+        for _ in 0..3 {
+            app.handle_input(Input::Down);
+        }
+        assert_eq!(app.selected(), MenuItem::Quit);
+
+        app.handle_input(Input::Left);
+        assert_eq!(app.board_size(), 9);
+    }
+
+    #[test]
+    fn test_confirm_on_the_size_row_cycles_and_wraps() {
+        let mut app = app_on_size_row();
+
+        app.handle_input(Input::Confirm);
+        assert_eq!(app.board_size(), 16);
+
+        app.handle_input(Input::Confirm);
+        assert_eq!(app.board_size(), 4);
+
+        app.handle_input(Input::Confirm);
+        assert_eq!(app.board_size(), 9);
+    }
+
+    #[test]
+    fn test_confirm_on_the_size_row_does_not_start_a_game() {
+        let mut app = app_on_size_row();
+
+        assert_eq!(app.handle_input(Input::Confirm), Request::Continue);
+        assert!(!app.has_game());
+    }
+
+    #[test]
+    fn test_menu_view_shows_the_selected_size() {
+        let mut app = App::new();
+        assert!(app.view().contains("Size  ‹ 9×9 ›"));
+
+        app.handle_input(Input::Down);
+        app.handle_input(Input::Right);
+        assert!(app.view().contains("Size  ‹ 16×16 ›"));
+    }
+
+    #[test]
+    fn test_new_game_still_starts_from_the_new_game_row() {
+        let mut app = app_on_size_row();
+        app.handle_input(Input::Right);
+        app.handle_input(Input::Up);
+
+        assert_eq!(app.selected(), MenuItem::NewGame);
+        assert_eq!(app.handle_input(Input::Confirm), Request::NewGame);
+        assert_eq!(app.box_size(), 4);
     }
 }
