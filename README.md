@@ -4,6 +4,10 @@ A terminal-based Sudoku game written in Rust. The goal is a locked terminal
 view where you navigate an N×N grid, fill and clear cells, and eventually
 play with full rule validation — all without leaving the terminal.
 
+<p align="center">
+  <img src="assets/menu.gif" alt="The rusty-sudoku menu, with a rotating Braille wireframe cube" width="560">
+</p>
+
 ![Sample Board TUI](/snapshot.png)
 
 ## Getting started
