@@ -12,9 +12,12 @@ MONO = os.path.join(MPL, "DejaVuSansMono.ttf")
 BRAILLE = os.path.join(MPL, "DejaVuSans.ttf")
 
 THEMES = {
-    "dark": dict(bg="#0d1117", fg="#d8dee9", dim="#4b535e", chrome="#161b22", dot=("#ff5f57", "#febc2e", "#28c840")),
-    "midnight": dict(bg="#11111b", fg="#cdd6f4", dim="#585b70", chrome="#181825", dot=("#f38ba8", "#f9e2af", "#a6e3a1")),
-    "light": dict(bg="#ffffff", fg="#24292f", dim="#afb8c1", chrome="#f6f8fa", dot=("#ff5f57", "#febc2e", "#28c840")),
+    "dark": dict(bg="#0d1117", fg="#dbe2ea", dim="#4a525d", edge="#232a33",
+                 chrome="#161b22", dot=("#ff5f57", "#febc2e", "#28c840")),
+    "midnight": dict(bg="#11111b", fg="#cdd6f4", dim="#585b70", edge="#272736",
+                     chrome="#181825", dot=("#f38ba8", "#f9e2af", "#a6e3a1")),
+    "light": dict(bg="#ffffff", fg="#1f2328", dim="#b6bec8", edge="#d8dee4",
+                  chrome="#f6f8fa", dot=("#ff5f57", "#febc2e", "#28c840")),
 }
 
 CSI = re.compile(r"\x1b\[([0-9;]*)m")
@@ -54,7 +57,7 @@ def fit_braille_size(cell_w, start):
     return best
 
 
-def render(frames, theme, size, pad, chrome, scale):
+def render(frames, theme, size, pad, chrome, scale, radius):
     t = THEMES[theme]
     mono = ImageFont.truetype(MONO, size)
     cell_w = round(mono.getlength("M"))
@@ -120,14 +123,26 @@ def render(frames, theme, size, pad, chrome, scale):
         img.paste(t["fg"], (0, 0), layers[False])
         img.paste(t["dim"], (0, 0), layers[True])
 
+        d.rounded_rectangle([0, 0, w - 1, h - 1], radius=radius,
+                            outline=t["edge"], width=1)
+
         if scale != 1:
             img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
         # Dithering scatters the antialiased edges of the box-drawing strokes
         # into a visible seam at every cell boundary. The palette is tiny and
         # smooth, so nothing needs dithering.
-        images.append(
-            img.quantize(colors=64, method=Image.MEDIANCUT, dither=Image.Dither.NONE)
-        )
+        frame_img = img.quantize(colors=63, method=Image.MEDIANCUT,
+                                 dither=Image.Dither.NONE)
+        if radius:
+            # GIF alpha is one bit, so the corners are knocked out rather than
+            # blended. Keep the radius small enough that the stair-step reads
+            # as a corner and not as a jagged edge.
+            cut = Image.new("L", frame_img.size, 255)
+            ImageDraw.Draw(cut).rounded_rectangle(
+                [0, 0, frame_img.size[0] - 1, frame_img.size[1] - 1],
+                radius=int(radius * scale), fill=0)
+            frame_img.paste(63, (0, 0), cut)
+        images.append(frame_img)
 
     return images
 
@@ -139,16 +154,17 @@ def main():
     ap.add_argument("--count", type=int, default=26)
     ap.add_argument("--theme", default="dark", choices=list(THEMES))
     ap.add_argument("--size", type=int, default=22)
-    ap.add_argument("--pad", type=int, default=18)
+    ap.add_argument("--pad", type=int, default=30)
     ap.add_argument("--duration", type=int, default=80)
     ap.add_argument("--scale", type=float, default=1.0)
-    ap.add_argument("--no-chrome", action="store_true")
+    ap.add_argument("--chrome", action="store_true")
+    ap.add_argument("--radius", type=int, default=0)
     a = ap.parse_args()
 
     raw = open(a.frames, encoding="utf-8").read()
     frames = [parse(f) for f in raw.split("\x0c") if f][: a.count]
 
-    images = render(frames, a.theme, a.size, a.pad, not a.no_chrome, a.scale)
+    images = render(frames, a.theme, a.size, a.pad, a.chrome, a.scale, a.radius)
     images[0].save(
         a.out,
         save_all=True,
@@ -157,6 +173,7 @@ def main():
         loop=0,
         optimize=True,
         disposal=2,
+        **({"transparency": 63} if a.radius else {}),
     )
     print(f"{a.out}  {len(images)} frames  {images[0].size[0]}x{images[0].size[1]}  "
           f"{os.path.getsize(a.out) / 1024:.0f} KB")

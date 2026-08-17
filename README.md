@@ -8,8 +8,6 @@ play with full rule validation — all without leaving the terminal.
   <img src="assets/menu.gif" alt="The rusty-sudoku menu, with a rotating Braille wireframe cube" width="560">
 </p>
 
-![Sample Board TUI](/snapshot.png)
-
 ## Getting started
 
 You'll need a recent Rust toolchain (this project uses edition 2024). Install

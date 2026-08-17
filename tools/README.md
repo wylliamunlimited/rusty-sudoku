@@ -22,5 +22,7 @@ Requires Pillow, and DejaVu Sans Mono for the box-drawing glyphs plus DejaVu
 Sans for Braille. No macOS system monospace font covers the Braille block, so
 `render_gif.py` picks both up from matplotlib's bundled font directory.
 
-`--theme dark|midnight|light`, `--size`, `--scale` and `--no-chrome` adjust the
-output.
+`--theme dark|midnight|light`, `--size`, `--pad` and `--scale` adjust the
+output. `--chrome` adds a mock title bar; `--radius N` rounds the corners,
+which is off by default because GIF alpha is one bit and the knockout
+stair-steps rather than blending.
